@@ -1,0 +1,37 @@
+{
+  "name": "seven-fallen-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "watch": "pm2 restart app.js --watch && pm2 logs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dev634/seven-fallen-api-prod.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dev634/seven-fallen-api-prod/issues"
+  },
+  "homepage": "https://github.com/dev634/seven-fallen-api-prod#readme",
+  "dependencies": {
+    "connect-redis": "^6.0.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "multer": "^1.4.2",
+    "passport": "^0.4.1",
+    "passport-facebook": "^3.0.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.7.1",
+    "redis": "^3.1.2"
+  },
+  "devDependencies": {
+    "watch": "^1.0.2"
+  }
+}
