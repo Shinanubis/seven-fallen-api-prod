@@ -15,9 +15,7 @@ module.exports = {
             Export.findDeckCards(options)
                 .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err.code).json(err));
-             
         } catch (e) {
-            console.log("[export controller]", e)
             res.status(e.code).json(e);
         }
     }

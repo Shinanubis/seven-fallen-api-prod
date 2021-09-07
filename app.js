@@ -22,6 +22,7 @@ const routeAuth = require('./Routes/Auth');
 const routeProfile = require('./Routes/Profile');
 const routeDecks = require("./Routes/Decks");
 const routeExport = require("./Routes/Export");
+const routeImport = require("./Routes/Import");
 
 //Port setting
 const PORT = process.env.NODE_PORT || 3000;
@@ -60,6 +61,7 @@ app.use('/api',routeAuth);
 app.use('/api',routeProfile);
 app.use('/api', routeDecks);
 app.use('/api', routeExport);
+app.use('/api', routeImport);
 
 app.listen(PORT, function () {
   console.log(`7 fallen available on port ${PORT}`)

@@ -13,7 +13,8 @@ Export.prototype.findDeckCards = async function(options){
         let requestTwo = "SELECT cards FROM holy_books AS h WHERE deck_id = $1";
         let requestThree = "SELECT cards FROM registers AS r WHERE deck_id = $1;";
         let request = '';
-        let isVisible = await this.db.query("SELECT deck_name FROM decks WHERE id = $1 AND is_visible = true;", [options.deck_id])
+
+        let isVisible = await this.db.query("SELECT deck_name FROM decks WHERE id = $1 AND user_id = $2", [options.deck_id, options.user_id])
         if(isVisible.rows.length === 0){
             throw {
                 code: '02000'
