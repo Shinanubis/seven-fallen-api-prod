@@ -7,5 +7,7 @@ function includes_some(array1, array2){
 }
 
 
-module.exports.includes_all = includes_all;
-module.exports.includes_some = includes_some;
+module.exports = {
+    includes_all,
+    includes_some
+}

@@ -141,8 +141,28 @@ Deck.prototype.findManyByKingdom = async function (options) {
 //Create a deck
 Deck.prototype.createOne = async function (options) {
     try {
-        let request = 'INSERT INTO decks(user_id, deck_name, kingdom) VALUES($1, $2, $3) RETURNING deck_name;'
+        let request = 'INSERT INTO decks(user_id, deck_name, kingdom) VALUES($1, $2, $3) RETURNING id,deck_name'
+        
         let { rows } = await this.db.query(request, [options.user_id, options.deck_name, options.kingdom]);
+
+        //check if eden exist if not INSERT
+        let edenExist = await this.db.query('SELECT 1 WHERE EXISTS(SELECT * FROM edens WHERE deck_id = $1)', [rows[0].id]);
+        if(edenExist.rows.length === 0){
+            let createEden = await this.db.query('INSERT INTO edens(deck_id,cards,qty) VALUES($1,$2,$3)', [rows[0].id, [], 0]);
+        }
+
+        //check if holybook exist if not INSERT
+        let holyBookExist = await this.db.query('SELECT 1 WHERE EXISTS(SELECT * FROM holy_books WHERE deck_id = $1)', [rows[0].id]);
+        if(holyBookExist.rows.length === 0){
+            let createHoolyBook = await this.db.query('INSERT INTO holy_books(deck_id,cards,qty) VALUES($1,$2,$3)', [rows[0].id, [], 0]);
+        }
+
+        //check if register exist if not INSERT
+        let registerkExist = await this.db.query('SELECT 1 WHERE EXISTS(SELECT * FROM registers WHERE deck_id = $1)', [rows[0].id])
+        if(registerkExist.rows.length === 0){
+            let createHoolyBook = await this.db.query('INSERT INTO registers(deck_id,cards,qty) VALUES($1,$2,$3)', [rows[0].id, [], 0]);
+        }
+
         return return_success(rows);
     } catch (e) {
         e.field = options.deck_name;
@@ -208,6 +228,7 @@ Deck.prototype.deleteOne = async function (options) {
         if(result.rowCount === 0) throw {code: '02000'};
         return return_success(result.rows[0].deck_name + ' deleted successfully');
     } catch (e) {
+        console.log("delete : ", e)
         return custom_errors(e);
     }
 }

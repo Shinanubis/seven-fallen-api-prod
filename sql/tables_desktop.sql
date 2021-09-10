@@ -17,7 +17,7 @@ CREATE TABLE decks(
     num_cards SMALLINT NOT NULL DEFAULT 0,
     is_visible BOOLEAN DEFAULT true,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, deck_name)
+    PRIMARY KEY (id)
 );
 
 DROP TABLE IF EXISTS edens;
@@ -25,26 +25,26 @@ CREATE TABLE edens(
     deck_id INT,
     cards INT[][],
     qty INT,
-    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE,
-    PRIMARY KEY (deck_id)
+    PRIMARY KEY(deck_id),
+    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS registers;
 CREATE TABLE registers(
     deck_id INT,
     cards INT[][],
-    qty INT CHECK(qty <=10),
-    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE,
-    PRIMARY KEY (deck_id)
+    qty INT,
+    PRIMARY KEY(deck_id),
+    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS holy_books;
 CREATE TABLE holy_books(
     deck_id INT,
     cards INT[][],
-    qty INT CHECK(qty >=50),
-    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE,
-    PRIMARY KEY (deck_id)
+    qty INT,
+    PRIMARY KEY(deck_id),
+    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE FUNCTION update_decks_qty() RETURNS TRIGGER AS $$
