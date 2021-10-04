@@ -228,7 +228,6 @@ Deck.prototype.deleteOne = async function (options) {
         if(result.rowCount === 0) throw {code: '02000'};
         return return_success(result.rows[0].deck_name + ' deleted successfully');
     } catch (e) {
-        console.log("delete : ", e)
         return custom_errors(e);
     }
 }

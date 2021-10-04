@@ -1,5 +1,4 @@
 module.exports = function CustomsErrors(e) {
-    console.log(e)
     switch (e.code) {
         case '22P02':
             return {

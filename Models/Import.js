@@ -31,8 +31,7 @@ Import.prototype.importDeck = async function(options){
         if(ownerResult.rows.length === 0){
             throw { code: '02000' }
         }
-
-
+        
         // update subdecks
         const updateEden = await this.db.query(edenRequest, [options.eden.cards ,options.eden.qty,options.deck_id]);
         const updateHolyBook = await this.db.query(holyBookRequest, [options.holy_book.cards ,options.holy_book.qty,options.deck_id]);

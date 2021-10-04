@@ -1,3 +1,9 @@
+const express = require('express');
+const router = express.Router({mergeParams: true});
+const multer = require('multer')();
+const EdenController = require('../Controllers/Eden');
+
+
 //Eden
 router.get('/decks/:id/eden', EdenController.getEden);
 router.get('/decks/:id/eden/cards', EdenController.getCards);
