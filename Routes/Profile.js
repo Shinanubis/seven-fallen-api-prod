@@ -6,7 +6,7 @@ const multer = require('multer')();
 
 // profile
 router.get('/profile', ProfileController.getProfile);
-router.patch('/profile',multer.fields([]) ,ProfileController.updateProfile);
+router.patch('/profile',multer.fields([{name:'avatar'}]) ,ProfileController.updateProfile);
 router.delete('/profile', ProfileController.deleteProfile);
 
 // avatar 

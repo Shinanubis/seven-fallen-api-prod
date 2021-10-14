@@ -9,7 +9,7 @@ function Profile() {
 
 Profile.prototype.getUserInfos = async function(options){
     try{
-        let request = 'SELECT id, username FROM users WHERE id = $1';
+        let request = 'SELECT id, username, avatar FROM users WHERE id = $1';
         let query_params = [options.id];
         let {rows} = await this.db.query(request, query_params);
         if(rows.length === 0) throw {code: "02000"};
@@ -24,7 +24,7 @@ Profile.prototype.updateUserInfos = async function(options){
 
         let request_part_one = 'UPDATE users SET';
         let request_params = [];
-        let request_part_two = ' WHERE id = $1 RETURNING id, gender, firstname, lastname, username, email,is_visible, allow_collections';
+        let request_part_two = ' WHERE id = $1 RETURNING id, username, avatar';
         let counter = 1;
         let change = 0;
         let query_params = [options.user_id];
@@ -43,53 +43,17 @@ Profile.prototype.updateUserInfos = async function(options){
             request_params.push(' username = $' + counter);
             query_params.push(options.username);
         }
-
-        if(options.firstname !== datas[0].firstname){
+       
+        if(options.pathname !== datas[0].avatar){
             change += 1;
             counter += 1;
-            request_params.push(' firstname = $' + counter);
-            query_params.push(options.firstname);
-        }
-
-        if(options.lastname !== datas[0].lastname){
-            change += 1;
-            counter += 1;
-            request_params.push(' lastname = $' + counter);
-            query_params.push(options.lastname);
-        }
-
-        if(options.email !== datas[0].email){
-            change += 1;
-            counter += 1;
-            request_params.push(' email = $' + counter);
-            query_params.push(options.email);
-        }
-
-
-        if(options.gender !== datas[0].gender.trim()){
-            change += 1;
-            counter += 1;
-            request_params.push(' gender = $' + counter);
-            query_params.push(options.gender);
-        }
-
-        if(options.is_visible !== datas[0].is_visible.toString()){
-            change += 1;
-            counter += 1;
-            request_params.push(' is_visible = $' + counter);
-            query_params.push(options.is_visible);
-        }
-
-        if(options.allow_collections !== datas[0].allow_collections.toString()){
-            change += 1;
-            counter += 1;
-            request_params.push(' allow_collections = $' + counter);
-            query_params.push(options.allow_collections);
+            request_params.push(' avatar = $' + counter);
+            query_params.push(options.pathname);
         }
 
         let request = request_part_one + request_params.join(',') + request_part_two;
         let result = '';
-
+        console.log("request : ", request)
         if(change === 0){
             result = await this.getUserDatas(options);
             return return_success(result[0]);
@@ -99,7 +63,6 @@ Profile.prototype.updateUserInfos = async function(options){
         }
         
     } catch (e) {
-        console.log(e)
         e.field = options.username;
         return custom_errors(e);
     }
@@ -172,7 +135,7 @@ Profile.prototype.exists = async function(options){
 }
 
 Profile.prototype.getUserDatas = async function(options){
-    let request = 'SELECT id, username, avatar, firstname, lastname, gender, email, is_visible, allow_collections FROM users WHERE id = $1';
+    let request = 'SELECT id, username, avatar FROM users WHERE id = $1';
     let query_params = [options.user_id];
     let result = await this.db.query(request, query_params);
     return result.rows;
