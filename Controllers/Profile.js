@@ -33,14 +33,15 @@ module.exports = {
             }
 
             if(req.files.avatar){
-                options.pathname = `/user-${options.user_id}.${req.files.avatar[0].mimetype.split('/').pop()}`;
-                file_manager.copyFile(`./static/avatars/user-${options.user_id}.${req.files.avatar[0].mimetype.split('/').pop()}`, req.files.avatar[0].buffer);   
+                options.pathname = `/user-${options.user_id}-${Date.now()}.${req.files.avatar[0].mimetype.split('/').pop()}`;
+                file_manager.copyFile(`./static/avatars/user-${options.user_id}-${Date.now()}.${req.files.avatar[0].mimetype.split('/').pop()}`, req.files.avatar[0].buffer);   
             }
 
             Profile.updateUserInfos(options)
                 .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err.code).json(err));
-        }catch(e){  
+        }catch(e){
+            console.log(e)  
             res.status(e.code).json(e);
         }
     },

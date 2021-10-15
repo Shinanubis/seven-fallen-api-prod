@@ -44,7 +44,12 @@ Profile.prototype.updateUserInfos = async function(options){
             query_params.push(options.username);
         }
        
-        if(options.pathname !== datas[0].avatar){
+        if(!options.pathname){
+            change += 1;
+            counter += 1;
+            request_params.push(' avatar = $' + counter);
+            query_params.push(datas[0].avatar);
+        }else{
             change += 1;
             counter += 1;
             request_params.push(' avatar = $' + counter);
@@ -53,7 +58,7 @@ Profile.prototype.updateUserInfos = async function(options){
 
         let request = request_part_one + request_params.join(',') + request_part_two;
         let result = '';
-        console.log("request : ", request)
+
         if(change === 0){
             result = await this.getUserDatas(options);
             return return_success(result[0]);
@@ -63,6 +68,7 @@ Profile.prototype.updateUserInfos = async function(options){
         }
         
     } catch (e) {
+        console.log(e)
         e.field = options.username;
         return custom_errors(e);
     }
