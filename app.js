@@ -42,7 +42,8 @@ if(process.env.NODE_ENV === 'prod'){
       },
       store: new redis_store({client: redis_client, ttl: 86400}),
       resave: false,
-      saveUninitialized: true,
+      saveUninitialized: false,
+      unset:'destroy'
    })
   );
 

@@ -66,9 +66,7 @@ Profile.prototype.updateUserInfos = async function(options){
             result = await this.db.query(request, query_params);
             return return_success(result.rows[0]);
         }
-        
     } catch (e) {
-        console.log(e)
         e.field = options.username;
         return custom_errors(e);
     }
@@ -82,7 +80,7 @@ Profile.prototype.deleteUserInfos = async function(options){
         if(rows.length === 0){
             throw { code : '02000' };
         }
-        return return_success(rows[0].username + 'deleted succesfully');
+        return return_success(rows[0].username + ' deleted succesfully');
     } catch (e) {
         return custom_errors(e);
     }
