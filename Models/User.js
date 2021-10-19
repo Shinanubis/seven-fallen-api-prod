@@ -6,7 +6,7 @@ const pagination = require('../Utils/pagination');
 const return_success = require('../Utils/returnSuccess');
 
 //allowed
-const allowed_order = ['id', 'username', 'firstname', 'lastname', 'gender', 'created_at'];
+const allowed_order = ['id', 'username' ,'created_at'];
 const allowed_gender = ['M', 'F', 'Other'];
 
 //default values
@@ -19,8 +19,9 @@ function User() {
 
 User.prototype.findAllVisible = async function(options){
     try {
-        let request = 'SELECT id,avatar,username,gender FROM users WHERE is_visible = true ORDER BY ';
+        let request = 'SELECT id, avatar, username, created_at FROM users ORDER BY ';
         let query_params = [];
+        
         if(options.order_by && allowed_order.includes(options.order_by)) {
             request += options.order_by;
         }else{
@@ -35,8 +36,11 @@ User.prototype.findAllVisible = async function(options){
         query_params.push(options.page ? pagination(options.page, options.size ?? default_page_size) : default_page, options.size ?? default_page_size);
 
         let result = await this.db.query(request, query_params);
-        if(result.rowCount === 0) throw {code: '02000'}; 
-        return return_success(result.rows);
+        let newResult = [
+            result.rowCount,
+            result.rows
+        ];
+        return return_success(newResult);
     } catch (e) {
         return custom_errors(e);
     }

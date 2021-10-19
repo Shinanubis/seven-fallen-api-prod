@@ -17,7 +17,7 @@ module.exports = {
             if(req.query.page && check_form_inputs(req.query.page, regex_mod.regex_page)) options.page = req.query.page;
             if(req.query.size && check_form_inputs(req.query.size, regex_mod.regex_page_size)) options.size = req.query.size;
             User.findAllVisible(options)
-                .then(response => res.status(response.code).json(response.message))
+                .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err.code).json(err.message));
         }catch(e){
             res.status(e.code).json(e.message);
