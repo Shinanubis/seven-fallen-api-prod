@@ -25,7 +25,7 @@ User.prototype.findAllVisible = async function(options){
         if(options.order_by && allowed_order.includes(options.order_by)) {
             request += options.order_by;
         }else{
-            request += 'id';
+            request += 'username ';
         }
 
         if(options.sens){
@@ -36,10 +36,13 @@ User.prototype.findAllVisible = async function(options){
         query_params.push(options.page ? pagination(options.page, options.size ?? default_page_size) : default_page, options.size ?? default_page_size);
 
         let result = await this.db.query(request, query_params);
+        let count = await this.db.query("SELECT COUNT(*) FROM users", []);
+
         let newResult = [
-            result.rowCount,
+            Number(count.rows[0].count),
             result.rows
         ];
+
         return return_success(newResult);
     } catch (e) {
         return custom_errors(e);
