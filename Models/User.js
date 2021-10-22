@@ -19,32 +19,63 @@ function User() {
 
 User.prototype.findAllVisible = async function(options){
     try {
-        let request = 'SELECT id, avatar, username, created_at FROM users ORDER BY ';
+        let request = 'SELECT id, avatar, username, created_at FROM users ';
         let query_params = [];
+        let counter = 0;
+        let total = 0;
+
+        if(options.search){
+            counter += 1; 
+            request += `WHERE username LIKE $${counter}`
+            query_params.push(options.search + '%');
+        }
         
         if(options.order_by && allowed_order.includes(options.order_by)) {
-            request += options.order_by;
+            request += " ORDER BY " + options.order_by;
         }else{
-            request += 'username ';
+            request += ' ORDER BY username ';
         }
 
         if(options.sens){
             request += ' DESC'
         }
 
-        request += ' OFFSET $1 FETCH NEXT $2 ROW ONLY';
-        query_params.push(options.page ? pagination(options.page, options.size ?? default_page_size) : default_page, options.size ?? default_page_size);
+        if(options.page){
+            counter += 1;
+            request += ` OFFSET $${counter}`;
+            query_params.push(pagination(options.page, options.size ?? default_page_size));
+        }else{
+            counter += 1;
+            request += ` OFFSET $${counter}`;
+            query_params.push(default_page);
+        }
+
+        if(options.size){
+            counter += 1;
+            request +=  ` FETCH NEXT $${counter} ROW ONLY`;
+            query_params.push(options.size);
+        }else{
+            counter += 1;
+            request +=  ` FETCH NEXT $${counter} ROW ONLY`;
+            query_params.push(default_page_size)
+        }
 
         let result = await this.db.query(request, query_params);
-        let count = await this.db.query("SELECT COUNT(*) FROM users", []);
-
+        
+        if(!options.search){
+            total = await this.db.query("SELECT COUNT(*) FROM users", []);
+        }else{
+            total = await this.db.query("SELECT COUNT(*) FROM users WHERE username LIKE $1", [options.search + '%']);
+        }
+        
         let newResult = [
-            Number(count.rows[0].count),
+            Number(total.rows[0].count),
             result.rows
         ];
 
         return return_success(newResult);
     } catch (e) {
+        console.log(e)
         return custom_errors(e);
     }
 }
@@ -83,7 +114,7 @@ User.prototype.findOne = async function(options){
 
 User.prototype.findMany = async function(options){
     try {
-        let request = 'SELECT id,avatar,username,gender FROM users WHERE is_visible = true ';
+        let request = 'SELECT id,avatar,username FROM users ';
         let query_params = [];
 
         if(options.username){
@@ -94,7 +125,7 @@ User.prototype.findMany = async function(options){
         if(options.order_by && allowed_order.includes(options.order_by)){
             request += 'ORDER BY ' + options.order_by + ' ';
         }else{
-            request += 'ORDER BY id ';
+            request += 'ORDER BY username ';
         }
 
         if(options.sens){
