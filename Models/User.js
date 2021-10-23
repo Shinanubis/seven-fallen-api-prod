@@ -75,7 +75,6 @@ User.prototype.findAllVisible = async function(options){
 
         return return_success(newResult);
     } catch (e) {
-        console.log(e)
         return custom_errors(e);
     }
 }

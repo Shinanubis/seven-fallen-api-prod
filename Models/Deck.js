@@ -7,8 +7,12 @@ const custom_errors = require('../Errors/CustomsErrors');
 const pool = require('../Services/database/db');
 
 // Global variable for allowed options order_by
-const allowed_order = ['id' ,'deck_name' ,'kingdom' ,'total_ec' , 'num_cards'];
+const allowed_order = ['id' ,'deck_name' , 'kingdom', 'num_cards'];
 const allowed_kingdoms_ids = ['1', '2', '3', '4', '5', '6', '7'];
+
+//default values
+const default_page = 0;
+const default_page_size = 20; 
 
 function Deck (){
     this.db = pool;
@@ -17,27 +21,63 @@ function Deck (){
 // Display all the shared decks
 Deck.prototype.findAllVisibleDecks = async function(options) {
     try {
-        let request = 'SELECT id, deck_name, is_visible, total_ec, kingdom, description, num_cards FROM decks WHERE is_visible = true ORDER BY ';
+        let request = 'SELECT id, user_id, deck_name, kingdom, num_cards FROM decks WHERE is_visible = true';
         let query_params = [];
+        let counter = 0;
+        let total = 0;
 
-        if(options.order_by && allowed_order.includes(options.order_by)){
-            request += options.order_by;
+        if(options.search){
+            counter += 1; 
+            request += ` AND deck_name LIKE $${counter}`
+            query_params.push(options.search + '%');
+        }
+        
+        if(options.order_by && allowed_order.includes(options.order_by)) {
+            request += " ORDER BY " + options.order_by;
         }else{
-            request += 'id';
+            request += ' ORDER BY deck_name ';
         }
 
         if(options.sens){
-            request += ' DESC';
-        };
-
-        if(options.page && options.size){
-            request += ' OFFSET $1 FETCH NEXT $2 ROW ONLY';
-            query_params.push(pagination(options.page, options.size), options.size);
+            request += ' DESC'
         }
 
-        const { rows } = await this.db.query(request,query_params);
-        return return_success(rows);
+        if(options.page){
+            counter += 1;
+            request += ` OFFSET $${counter}`;
+            query_params.push(pagination(options.page, options.size ?? default_page_size));
+        }else{
+            counter += 1;
+            request += ` OFFSET $${counter}`;
+            query_params.push(default_page);
+        }
+
+        if(options.size){
+            counter += 1;
+            request +=  ` FETCH NEXT $${counter} ROW ONLY`;
+            query_params.push(options.size);
+        }else{
+            counter += 1;
+            request +=  ` FETCH NEXT $${counter} ROW ONLY`;
+            query_params.push(default_page_size)
+        }
+
+        let result = await this.db.query(request, query_params);
+        
+        if(!options.search){
+            total = await this.db.query("SELECT COUNT(*) FROM decks WHERE is_visible = true", []);
+        }else{
+            total = await this.db.query("SELECT COUNT(*) FROM decks WHERE is_visible = true AND deck_name LIKE $1", [options.search + '%']);
+        }
+        
+        let newResult = [
+            Number(total.rows[0].count),
+            result.rows
+        ];
+
+        return return_success(newResult);
     } catch (e) {
+        console.log(e)
         return custom_errors(e);
     }
 }

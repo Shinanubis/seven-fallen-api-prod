@@ -60,10 +60,11 @@ module.exports = {
             if(req.query.sens === 'desc') options.sens = req.query.sens;
             if(req.query.page && checkFormInputs(req.query.page, regex_mod.regex_page)) options.page = req.query.page;
             if(req.query.size && checkFormInputs(req.query.size, regex_mod.regex_page_size)) options.size = req.query.size;
+            if(req.query.search) options.search = req.query.search;
 
             Deck.findAllVisibleDecks(options)
-                .then(response => res.status(response.code).json(response.message))
-                .catch(err => res.status(err).json(err.message))
+                .then(response => res.status(response.code).json(response))
+                .catch(err => res.status(err).json(err))
         }catch(e){
             res.status(e.code).json(e.message);
         }
