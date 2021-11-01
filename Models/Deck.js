@@ -21,15 +21,42 @@ function Deck (){
 // Display all the shared decks
 Deck.prototype.findAllVisibleDecks = async function(options) {
     try {
-        let request = 'SELECT id, user_id, deck_name, kingdom, num_cards FROM decks WHERE is_visible = true';
+        let request = `SELECT id, user_id, deck_name, kingdom, num_cards, divinity FROM decks\n
+                       LEFT JOIN (\n
+                           SELECT deck_id, card_id AS divinity FROM (\n
+                              SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS type_id FROM edens\n
+                              )AS result WHERE type_id = 1\n
+                          ) AS divinities ON decks.id = divinities.deck_id WHERE is_visible = true`;
+        let totalRequest = `SELECT COUNT(*) FROM decks\n
+                       LEFT JOIN (\n
+                           SELECT deck_id, card_id AS divinity FROM (\n
+                              SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS type_id FROM edens\n
+                              )AS result WHERE type_id = 1\n
+                          ) AS divinities ON decks.id = divinities.deck_id WHERE is_visible = true`;
+        let total_params = [];
         let query_params = [];
         let counter = 0;
         let total = 0;
+        
+        if(options.divinity){
+            counter += 1;
+            request += ` AND divinity = $${counter}`;
+            totalRequest += ` AND divinity = $${counter}`;
+            query_params.push(options.divinity);
+            total_params.push(options.divinity);
+        }
+
+        if(options.kingdoms){
+            request += ` AND kingdom IN (${options.kingdoms})`;
+            totalRequest += ` AND kingdom IN (${options.kingdoms})`;
+        }
 
         if(options.search){
             counter += 1; 
-            request += ` AND deck_name LIKE $${counter}`
+            request += ` AND deck_name LIKE $${counter}`;
+            totalRequest += ` AND deck_name LIKE $${counter}`;
             query_params.push(options.search + '%');
+            total_params.push(options.search + '%');
         }
         
         if(options.order_by && allowed_order.includes(options.order_by)) {
@@ -63,15 +90,10 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
         }
 
         let result = await this.db.query(request, query_params);
-        
-        if(!options.search){
-            total = await this.db.query("SELECT COUNT(*) FROM decks WHERE is_visible = true", []);
-        }else{
-            total = await this.db.query("SELECT COUNT(*) FROM decks WHERE is_visible = true AND deck_name LIKE $1", [options.search + '%']);
-        }
+        let totalResult = await this.db.query(totalRequest, total_params);
         
         let newResult = [
-            Number(total.rows[0].count),
+            Number(totalResult.rows[0].count),
             result.rows
         ];
 

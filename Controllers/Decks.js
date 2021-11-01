@@ -56,16 +56,23 @@ module.exports = {
     getAll(req,res){
         try{
             const options = {};
+
             if(req.query.order_by && checkFormInputs(req.query.order_by, regex_order)) options.order_by = req.query.order_by;
             if(req.query.sens === 'desc') options.sens = req.query.sens;
             if(req.query.page && checkFormInputs(req.query.page, regex_mod.regex_page)) options.page = req.query.page;
             if(req.query.size && checkFormInputs(req.query.size, regex_mod.regex_page_size)) options.size = req.query.size;
             if(req.query.search) options.search = req.query.search;
+            if(req.query.divinity) options.divinity = req.query.divinity;
+            if(req.query.kingdoms) {
+                options.kingdoms = req.query.kingdoms.substring(1);
+                options.kingdoms = req.query.kingdoms.substring(req.query.kingdoms.length - 1, 1); 
+            };
 
             Deck.findAllVisibleDecks(options)
                 .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err).json(err))
         }catch(e){
+            console.log(e)
             res.status(e.code).json(e.message);
         }
     },
