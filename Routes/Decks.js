@@ -8,6 +8,7 @@ const multer = require('multer')();
 router.get('/decks', DecksController.getAllByUserId);
 router.get('/decks/shared', DecksController.getAll);
 router.get('/decks/:id', DecksController.getById);
+router.get('/decks/:id/cards', DecksController.getDeckCards);
 router.post('/decks/add',multer.fields([]), DecksController.create);
 router.post('/decks/kingdoms',multer.fields([]),DecksController.getByKingdom);
 router.patch('/decks/update/:id', multer.fields([]),DecksController.updateById);

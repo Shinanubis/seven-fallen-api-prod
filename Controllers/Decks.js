@@ -96,6 +96,21 @@ module.exports = {
         }
     },
 
+    getDeckCards(req,res){
+        try{
+            const options = {};
+            options.user_id = process.env.NODE_ENV === 'dev' ? req.body.user_id : req.session.passport.user;
+            if(req.query.id){
+                options.deck_id = req.query.id
+            }
+            Deck.findAllDeckCards(options)
+                .then(response => res.status(response.code).json(response))
+                .catch(err => res.status(err.code).json(err));
+        }catch(e){
+            res.status(e.code).json(e);
+        }
+    },
+
     getById(req, res) {
         try {
             const options = {};

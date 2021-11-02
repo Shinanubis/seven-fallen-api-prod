@@ -99,20 +99,41 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 
         return return_success(newResult);
     } catch (e) {
-        console.log(e)
         return custom_errors(e);
     }
 }
 
+//Display all cards owned by a deck and by type
+Deck.prototype.findAllDeckCards = async function(options){
+    try{
+        let request = `SELECT id, user_id, deck_name, kingdom, num_cards, eden_cards, register_cards, holy_book_cards\n 
+                       FROM decks\n
+                       LEFT JOIN (SELECT deck_id, cards AS eden_cards FROM edens) AS edens\n
+                       ON decks.id = edens.deck_id\n
+                       LEFT JOIN (SELECT deck_id, cards AS register_cards FROM registers) AS registers\n
+                       ON decks.id = registers.deck_id\n
+                       LEFT JOIN (SELECT deck_id, cards AS holy_book_cards FROM holy_books) AS holy_books\n 
+                       ON decks.id = holy_books.deck_id\n
+                       WHERE id = $1`;
+        return return_success("Good");
+    }catch(e){
+        return custom_errors(e);
+    }
+}
 // Display all user decks
 Deck.prototype.findAllUserDecks = async function (options) {
     try {
-        let request = 'SELECT id, deck_name, kingdom, num_cards FROM decks WHERE user_id = $1 '; 
+        let request = `SELECT id, deck_name, kingdom, num_cards, divinity FROM decks\n
+                       LEFT JOIN (SELECT deck_id, card_id AS divinity FROM (\n
+                       SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type FROM edens\n
+                       ) AS result WHERE card_type = 1) AS divinities\n
+                       ON decks.id = divinities.deck_id\n
+                       WHERE user_id = $1`;
         let query_params = [options.user_id];
         if(options.order_by && allowed_order.includes(options.order_by)){
-            request += 'ORDER BY ' + options.order_by;
+            request += ' ORDER BY ' + options.order_by;
         }else{
-            request += 'ORDER BY id';
+            request += ' ORDER BY id';
         }
 
         if(options.sens){
@@ -134,6 +155,7 @@ Deck.prototype.findAllUserDecks = async function (options) {
         ]
         return return_success(newObj);
     } catch (e) {
+        console.log(e)
         return custom_errors(e);
     }
 }
