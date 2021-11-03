@@ -100,9 +100,10 @@ module.exports = {
         try{
             const options = {};
             options.user_id = process.env.NODE_ENV === 'dev' ? req.body.user_id : req.session.passport.user;
-            if(req.query.id){
-                options.deck_id = req.query.id
+            if(req.params.id){
+                options.deck_id = req.params.id
             }
+            
             Deck.findAllDeckCards(options)
                 .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err.code).json(err));

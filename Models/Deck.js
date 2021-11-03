@@ -106,16 +106,24 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 //Display all cards owned by a deck and by type
 Deck.prototype.findAllDeckCards = async function(options){
     try{
-        let request = `SELECT id, user_id, deck_name, kingdom, num_cards, eden_cards, register_cards, holy_book_cards\n 
-                       FROM decks\n
-                       LEFT JOIN (SELECT deck_id, cards AS eden_cards FROM edens) AS edens\n
-                       ON decks.id = edens.deck_id\n
-                       LEFT JOIN (SELECT deck_id, cards AS register_cards FROM registers) AS registers\n
-                       ON decks.id = registers.deck_id\n
-                       LEFT JOIN (SELECT deck_id, cards AS holy_book_cards FROM holy_books) AS holy_books\n 
-                       ON decks.id = holy_books.deck_id\n
-                       WHERE id = $1`;
-        return return_success("Good");
+        let request = `SELECT array_agg(ARRAY[card_id, card_qty]) AS cards, card_type FROM decks
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS card_qty FROM edens) AS edens
+                       ON decks.id = edens.deck_id WHERE id = $1 GROUP BY decks.id,  edens.card_type, edens.card_qty  UNION ALL
+                       SELECT array_agg(ARRAY[card_id,card_qty]) AS cards_ids, card_type FROM decks 
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS card_qty FROM registers) AS registers
+                       ON decks.id = registers.deck_id WHERE id = $1 GROUP BY decks.id, registers.card_type, registers.card_qty UNION ALL
+                       SELECT array_agg(ARRAY[card_id,card_qty]) AS cards_ids, card_type FROM decks
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS card_qty FROM holy_books) AS holy_books
+                       ON decks.id = holy_books.deck_id WHERE id = $1 GROUP BY decks.id, holy_books.card_type, holy_books.card_qty ORDER BY card_type`
+        let query_params = [];
+        query_params.push(options.deck_id);
+        let result = await this.db.query(request, query_params);
+        let newResult = result.rows.filter(elmt => elmt.card_type !== null);
+        let newResultToMap = newResult.reduce((map, obj) =>{
+            map[obj.card_type] = obj.cards;
+            return map;
+        } ,{}) 
+        return return_success(newResultToMap);
     }catch(e){
         return custom_errors(e);
     }
