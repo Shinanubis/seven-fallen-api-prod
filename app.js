@@ -7,6 +7,7 @@ const express = require('express');
 const app = express();
 const db = require('./Services/database/db');
 const cors = require("cors");
+const cron = require("node-cron");
 
 let redis_store = {};
 let redis_client = {};
@@ -29,6 +30,12 @@ const PORT = process.env.NODE_PORT || 3000;
 app.set("trust proxy", true)
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
+
+/*Jobs scheduling*/
+// cron.schedule('* * * * *', () => {
+//   let now = new Date();
+//   console.log(`[${now.getHours()} : ${now.getMinutes()} : ${now.getSeconds()}] hello`)
+// })
 
 if(process.env.NODE_ENV === 'prod'){
   app.use(

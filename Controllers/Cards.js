@@ -5,7 +5,7 @@ dotenv.config();
 const Card = new CardsModel();
 
 function checkDivinity(obj){
-    return Object.keys(obj).filter(elmt => obj[elmt].type === 1).length === 1 || Object.keys(obj).filter(elmt => obj[elmt].type === 1).length === 0;
+    return Object.keys(obj).filter(elmt => Number(obj[elmt].type) === 1).length > 1;
 }
 
 module.exports = {
@@ -49,7 +49,7 @@ module.exports = {
             }
 
             if(Number(req.params.type) === 1){
-                if(!checkDivinity(options.payload)){
+                if(checkDivinity(options.payload)){
                     throw {
                         code: 400,
                         message: "Should have 1 divinity max"
@@ -58,8 +58,9 @@ module.exports = {
             }
 
             Card.updateCardsByType(options)
-                .then(response => res.status(response.code).json(response.message))
-                .catch(err => res.status(err.code).json(err.message))
+                .then(response => res.status(response.code).json(response))
+                .catch(err => res.status(err.code).json(err));
+
         }catch(e){
             res.status(e.code).json(e);
         }

@@ -24,7 +24,7 @@ CREATE TABLE decks(
 DROP TABLE IF EXISTS edens;
 CREATE TABLE edens(
     deck_id INT,
-    cards INT[][],
+    cards TEXT[][],
     qty INT,
     PRIMARY KEY(deck_id),
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
@@ -33,7 +33,7 @@ CREATE TABLE edens(
 DROP TABLE IF EXISTS registers;
 CREATE TABLE registers(
     deck_id INT,
-    cards INT[][],
+    cards TEXT[][],
     qty INT,
     PRIMARY KEY(deck_id),
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
@@ -42,7 +42,7 @@ CREATE TABLE registers(
 DROP TABLE IF EXISTS holy_books;
 CREATE TABLE holy_books(
     deck_id INT,
-    cards INT[][],
+    cards TEXT[][],
     qty INT,
     PRIMARY KEY(deck_id),
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE

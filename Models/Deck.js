@@ -25,19 +25,20 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
                        LEFT JOIN (\n
                            SELECT deck_id, card_id AS divinity FROM (\n
                               SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS type_id FROM edens\n
-                              )AS result WHERE type_id = 1\n
+                              )AS result WHERE type_id = '1'\n
                           ) AS divinities ON decks.id = divinities.deck_id WHERE is_visible = true`;
+
         let totalRequest = `SELECT COUNT(*) FROM decks\n
-                       LEFT JOIN (\n
-                           SELECT deck_id, card_id AS divinity FROM (\n
-                              SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS type_id FROM edens\n
-                              )AS result WHERE type_id = 1\n
-                          ) AS divinities ON decks.id = divinities.deck_id WHERE is_visible = true`;
+                            LEFT JOIN (\n
+                                SELECT deck_id, card_id AS divinity FROM (\n
+                                  SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS type_id FROM edens\n
+                                  )AS result WHERE type_id = '1'\n
+                                ) AS divinities ON decks.id = divinities.deck_id WHERE is_visible = true`;
         let total_params = [];
         let query_params = [];
         let counter = 0;
         let total = 0;
-        
+
         if(options.divinity){
             counter += 1;
             request += ` AND divinity = $${counter}`;
@@ -99,6 +100,7 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 
         return return_success(newResult);
     } catch (e) {
+        console.log(e)
         return custom_errors(e);
     }
 }
@@ -106,24 +108,28 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 //Display all cards owned by a deck and by type
 Deck.prototype.findAllDeckCards = async function(options){
     try{
-        let request = `SELECT array_agg(ARRAY[card_id, card_qty]) AS cards, card_type FROM decks
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS card_qty FROM edens) AS edens
+        let request = `SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards, card_type FROM decks
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM edens) AS edens
                        ON decks.id = edens.deck_id WHERE id = $1 GROUP BY decks.id,  edens.card_type, edens.card_qty  UNION ALL
-                       SELECT array_agg(ARRAY[card_id,card_qty]) AS cards_ids, card_type FROM decks 
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS card_qty FROM registers) AS registers
+                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards_ids, card_type FROM decks 
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM registers) AS registers
                        ON decks.id = registers.deck_id WHERE id = $1 GROUP BY decks.id, registers.card_type, registers.card_qty UNION ALL
-                       SELECT array_agg(ARRAY[card_id,card_qty]) AS cards_ids, card_type FROM decks
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS card_qty FROM holy_books) AS holy_books
+                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards_ids, card_type FROM decks
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM holy_books) AS holy_books
                        ON decks.id = holy_books.deck_id WHERE id = $1 GROUP BY decks.id, holy_books.card_type, holy_books.card_qty ORDER BY card_type`
         let query_params = [];
         query_params.push(options.deck_id);
         let result = await this.db.query(request, query_params);
         let newResult = result.rows.filter(elmt => elmt.card_type !== null);
-        let newResultToMap = newResult.reduce((map, obj) =>{
-            map[obj.card_type] = obj.cards;
+        let newResultPerType = newResult.reduce((map, obj) =>{
+            map[obj.card_type] = obj.cards.reduce((map1, elmt) => {
+                map1[elmt[0]] = {image_path: elmt[1], qty: elmt[2], max:elmt[3]}
+                return map1;
+            },{});
             return map;
-        } ,{}) 
-        return return_success(newResultToMap);
+        } ,{});
+
+        return return_success(newResultPerType);
     }catch(e){
         return custom_errors(e);
     }
@@ -134,10 +140,10 @@ Deck.prototype.findAllUserDecks = async function (options) {
         let request = `SELECT id, deck_name, kingdom, num_cards, divinity FROM decks\n
                        LEFT JOIN (SELECT deck_id, card_id AS divinity FROM (\n
                        SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type FROM edens\n
-                       ) AS result WHERE card_type = 1) AS divinities\n
+                       ) AS result WHERE card_type = $2) AS divinities\n
                        ON decks.id = divinities.deck_id\n
                        WHERE user_id = $1`;
-        let query_params = [options.user_id];
+        let query_params = [options.user_id, 1];
         if(options.order_by && allowed_order.includes(options.order_by)){
             request += ' ORDER BY ' + options.order_by;
         }else{
@@ -149,12 +155,13 @@ Deck.prototype.findAllUserDecks = async function (options) {
         }
 
         if(options.page && options.size){
-            request += ' OFFSET $2 FETCH NEXT $3 ROW ONLY';
+            request += ' OFFSET $3 FETCH NEXT $4 ROW ONLY';
             query_params.push(pagination(options.page, options.size), options.size);
         }else{
-            request += ' OFFSET $2 FETCH NEXT $3 ROW ONLY';
+            request += ' OFFSET $3 FETCH NEXT $4 ROW ONLY';
             query_params.push(pagination(1, 10), 10);
         }
+
         const counter = await this.db.query("SELECT COUNT(*) as total FROM decks WHERE user_id = $1", [options.user_id]);
         const { rows } = await this.db.query(request, query_params);
         const newObj = [
@@ -163,7 +170,6 @@ Deck.prototype.findAllUserDecks = async function (options) {
         ]
         return return_success(newObj);
     } catch (e) {
-        console.log(e)
         return custom_errors(e);
     }
 }
