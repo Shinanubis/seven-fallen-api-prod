@@ -100,7 +100,6 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 
         return return_success(newResult);
     } catch (e) {
-        console.log(e)
         return custom_errors(e);
     }
 }
@@ -109,21 +108,36 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 Deck.prototype.findAllDeckCards = async function(options){
     try{
         let request = `SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards, card_type FROM decks
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM edens) AS edens
-                       ON decks.id = edens.deck_id WHERE id = $1 GROUP BY decks.id,  edens.card_type, edens.card_qty  UNION ALL
-                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards_ids, card_type FROM decks 
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM registers) AS registers
-                       ON decks.id = registers.deck_id WHERE id = $1 GROUP BY decks.id, registers.card_type, registers.card_qty UNION ALL
-                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards_ids, card_type FROM decks
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM holy_books) AS holy_books
-                       ON decks.id = holy_books.deck_id WHERE id = $1 GROUP BY decks.id, holy_books.card_type, holy_books.card_qty ORDER BY card_type`
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM edens) AS eden
+                       ON decks.id = eden.deck_id WHERE id = $1 GROUP BY decks.id, eden.card_type, eden.card_qty  UNION ALL
+                       
+                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards, card_type FROM decks 
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM registers) AS register
+                       ON decks.id = register.deck_id WHERE id = $1 GROUP BY decks.id, register.card_type, register.card_qty UNION ALL
+
+                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards, card_type FROM decks
+                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM holy_books) AS holy_book
+                       ON decks.id = holy_book.deck_id WHERE id = $1 GROUP BY decks.id, holy_book.card_type, holy_book.card_qty`
+        let requestTwo =`SELECT card_type, array_agg(ARRAY[card_id, card_type, image_path, qty, max]) AS cards FROM (
+                            SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS qty, unnest(cards[:][5:5]) AS max FROM edens WHERE deck_id = $1
+                        ) AS edens 
+                        GROUP BY edens.card_type UNION ALL 
+                         SELECT card_type, array_agg(ARRAY[card_id, card_type, image_path, qty, max]) AS cards FROM (
+                            SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS qty, unnest(cards[:][5:5]) AS max FROM registers WHERE deck_id = $1
+                         ) AS registers 
+                         GROUP BY registers.card_type UNION ALL 
+                        SELECT card_type, array_agg(ARRAY[card_id, card_type, image_path, qty, max]) AS cards FROM (
+                            SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS qty, unnest(cards[:][5:5]) AS max FROM holy_books WHERE deck_id = $1
+                        ) AS holy_books 
+                        GROUP BY holy_books.card_type` 
         let query_params = [];
         query_params.push(options.deck_id);
-        let result = await this.db.query(request, query_params);
+        let result = await this.db.query(requestTwo, query_params);
+        
         let newResult = result.rows.filter(elmt => elmt.card_type !== null);
         let newResultPerType = newResult.reduce((map, obj) =>{
             map[obj.card_type] = obj.cards.reduce((map1, elmt) => {
-                map1[elmt[0]] = {image_path: elmt[1], qty: elmt[2], max:elmt[3]}
+                map1[elmt[0]] = {image_path: elmt[2], qty: elmt[3], max: elmt[4]}
                 return map1;
             },{});
             return map;

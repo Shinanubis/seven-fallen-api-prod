@@ -1,4 +1,5 @@
 const DecksModel = require('../Models/Deck');
+const HolyBookModel = require('../Models/HolyBook');
 
 // Utils
 const regex_mod = require('../Utils/regex');
@@ -7,6 +8,7 @@ const checkId = require('../Utils/checkId');
 
 // Models instances
 const Deck = new DecksModel();
+const HolyBook = new HolyBookModel();
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -109,17 +111,27 @@ module.exports = {
         }
     },
 
-    getById(req, res) {
+    async getById(req, res) {
         try {
             const options = {};
             options.user_id = process.env.NODE_ENV === 'dev' ?  req.body.user_id : req.session.passport.user;
             if(req.params.id && checkId(req.params.id) && checkFormInputs(req.params.id, regex_id)) {
                 options.deck_id = req.params.id;
             }
-            Deck.findOneUserDeck(options)
-                .then(response => res.status(response.code).json(response))
-                .catch(err => res.status(err.code).json(err));
 
+            let responseDeckModel = await Deck.findOneUserDeck(options);
+            let responseHolyBookModel = await HolyBook.getHolyBook(options);
+            if(responseHolyBookModel.code === 200 && responseDeckModel.code === 200){
+                let newObj = {
+                    code: 200,
+                    message: {
+                        ...responseDeckModel.message,
+                        holyBookQty: responseHolyBookModel.message.qty
+                    }
+                }
+
+                return res.status(newObj.code).json(newObj) 
+            }
         } catch (e) {
             res.status(e.code).json(e);
         }
