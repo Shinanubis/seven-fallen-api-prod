@@ -107,17 +107,6 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 //Display all cards owned by a deck and by type
 Deck.prototype.findAllDeckCards = async function(options){
     try{
-        let request = `SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards, card_type FROM decks
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM edens) AS eden
-                       ON decks.id = eden.deck_id WHERE id = $1 GROUP BY decks.id, eden.card_type, eden.card_qty  UNION ALL
-                       
-                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards, card_type FROM decks 
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM registers) AS register
-                       ON decks.id = register.deck_id WHERE id = $1 GROUP BY decks.id, register.card_type, register.card_qty UNION ALL
-
-                       SELECT array_agg(ARRAY[card_id, image_path, card_qty, card_max]) AS cards, card_type FROM decks
-                       LEFT JOIN (SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS card_qty, unnest(cards[:][5:5]) AS card_max FROM holy_books) AS holy_book
-                       ON decks.id = holy_book.deck_id WHERE id = $1 GROUP BY decks.id, holy_book.card_type, holy_book.card_qty`
         let requestTwo =`SELECT card_type, array_agg(ARRAY[card_id, card_type, image_path, qty, max]) AS cards FROM (
                             SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS qty, unnest(cards[:][5:5]) AS max FROM edens WHERE deck_id = $1
                         ) AS edens 
