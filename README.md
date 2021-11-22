@@ -5,11 +5,46 @@
 1. Create app 
 2. Create the Routes + Controller + Models
 
+## Server caching with Redis
+1. Install Redis
+      - sudo apt update
+      - sudo apt install redis-server
+      - sudo nano /etc/redis/redis.conf
+      - supervised no -> systemd
+      - sudo systemctl restart redis.service
+2. Redis Test
+      - sudo systemctl status redis
+      - redis-cli
+      - ping
+      - set test "It's working!"
+      - get test
+      - exit
+      - sudo systemctl restart redis
+      - redis-cli
+      - get test
+      - exit
+3. Link Redis to Localhost
+      - sudo nano /etc/redis/redis.conf
+      - bind 127.0.0.1 ::1
+      - sudo systemctl restart redis
+      - sudo apt install net-tools
+      - sudo netstat -lnp | grep redis
+4. Redis password setting
+      - sudo nano /etc/redis/redis.conf
+      - uncomment **# requirepass foobared** -> **requirepass newpasswordofthedeath**
+      - sudo systemctl restart redis.service
+      - redis-cli
+      - set key1 10
+      - (error) NOAUTH Authentication required.
+      - auth your_redis_password
+      - set key1 10
+      - get key1
+      - quit
+
 ### Route testing with postman
 1. Install postman for local mode **https://www.postman.com/downloads/**
 
 ### Automation with node-cron
-
 1. Install node-cron **npm install node-cron**
 2. Settings the time scheduling every midnight
 3. Create Models for upsert
@@ -21,7 +56,7 @@
 1. Install swagger **npm install swagger-ui-express swagger-jsdoc**
 
 ### Validation / Sanitization
-1. Install Validator
+1. Install Validator **npm install express-validator**
 2. Check if routes need sanitization and validation 
 
 ## Database
