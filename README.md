@@ -5,14 +5,17 @@
 1. **Create app** 
 2. **Create the Routes**
       1. Cards Route
-            - [ ] /card 
-            - [ ] Params -> page, size, types, kingdoms, name 
-            - [ ] Method -> GET
-            - [ ] /card/:id 
-            - [ ] Method -> GET
-            - [ ] /card/type/:id 
-            - [ ] Method -> GET
-            - [ ] /card/kingdom/:kingdom Params -> page, size Method -> GET
+            - [ ] GET /card?page=1&size=20&types=[1,2,3,4,5]&kingdoms=[1,2,3,4]&name=Fafnir 
+            - [ ] GET /card/:id 
+            - [ ] GET /card/type/:id?page=1&size=20 
+            - [ ] GET /card/kingdom/:kingdom?page=1&size=20
+      2. Decks Route
+            - [x] GET, POST /deck?page=1&size=20&kingdoms=[1,2,3,4]
+            - [ ] GET, PATCH, DELETE /deck/:id
+            - [ ] GET /deck/:id/stats
+      3. User Route
+            - [x] GET, POST /user?page=1&size=20
+            - [x] GET, PATCH, DELETE /user/:id
 
 ### Server caching with Redis
 1. Install Redis
