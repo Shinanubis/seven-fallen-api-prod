@@ -48,38 +48,69 @@ CREATE TABLE holy_books(
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS languages
+CREATE TABLE languages(
+    id INT,
+    lang_name VARCHAR(32),
+    PRIMARY KEY(id) 
+)
+
 DROP TABLE IF EXISTS types;
 CREATE TABLE types(
     id INT,
-    lang VARCHAR(5),
+    lang_id INT,
     type_name VARCHAR(16),
-    PRIMARY KEY(id, lang)
+    PRIMARY KEY(id, lang_id),
+    FOREIGN KEY (lang_id) REFERENCES languages(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS rarities;
 CREATE TABLE rarities(
     id INT,
-    lang VARCHAR(5),
+    lang_id INT,
     raritie_name VARCHAR(16),
-    PRIMARY KEY(id, lang)
+    PRIMARY KEY(id, lang_id),
+    FOREIGN KEY (lang_id) REFERENCES languages(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS kingdoms;
 CREATE TABLE kingdoms(
     id INT,
-    lang VARCHAR(5),
+    lang_id INT,
     kingdom_name VARCHAR(32),
     short_name VARCHAR(8),
-    PRIMARY KEY(id, lang)
+    PRIMARY KEY(id, lang_id),
+    FOREIGN KEY (lang_id) REFERENCES languages(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS extensions;
 CREATE TABLE extensions(
     id INT,
-    lang VARCHAR(5),
+    lang_id INT,
     extension_name VARCHAR(32),
     short_name VARCHAR(8),
-    PRIMARY KEY(id, lang)
+    PRIMARY KEY(id, lang_id),
+    FOREIGN KEY (lang_id) REFERENCES languages(id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS cards;
+CREATE TABLE cards(
+    id INT,
+    lang_id INT,
+    type_id INT,
+    extension_id INT,
+    kingdom_id INT,
+    raritie_id INT,
+    raritie_name VARCHAR(64),
+    extension_name VARCHAR(128),
+    capacities ARRAY[],
+    classes ARRAY[], 
+    card_name VARCHAR(32) NOT NULL,
+    image_path VARCHAR(64) NOT NULL,
+    nb_max_per_deck INT NOT NULL, 
+    ec_cost INT,
+    PRIMARY KEY(id, lang_id),
+    FOREIGN KEY (lang_id) REFERENCES languages(id) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE FUNCTION update_decks_qty() RETURNS TRIGGER AS $$
