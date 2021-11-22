@@ -250,8 +250,6 @@ User.prototype.update = async function(options){
 
         let request = request_part_one + request_params.join(',') + request_part_two;
         let result = await this.db.query(request, query_params);
-        console.log("Request : ",request);
-        console.log("Params : ", query_params);
         return return_success(result.rows[0]);
     } catch (e) { 
         e.field = options.username;

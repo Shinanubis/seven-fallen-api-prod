@@ -1,19 +1,25 @@
+//Models
 const DecksModel = require('../Models/Deck');
+const EdenModel = require('../Models/Eden');
 const HolyBookModel = require('../Models/HolyBook');
+const RegisterModel = require('../Models/Register');
 
-// Utils
+//Models instances
+const Deck = new DecksModel();
+const Eden = new EdenModel();
+const HolyBook = new HolyBookModel();
+const Register = new RegisterModel();
+
+//Utils
 const regex_mod = require('../Utils/regex');
 const checkFormInputs = require('../Utils/checkFormInputs');
 const checkId = require('../Utils/checkId');
 
-// Models instances
-const Deck = new DecksModel();
-const HolyBook = new HolyBookModel();
-
+//Environment varriables
 const dotenv = require('dotenv');
 dotenv.config();
 
-//Global varaibles for regex
+//Global variables for regex
 const regex_order = /^[A-Za-z_]+$/;
 const regex_id = /^[1-9]{1}[0-9]{0,10}$/;
 
@@ -82,7 +88,6 @@ module.exports = {
         try {
             const options = {};
             options.user_id = process.env.NODE_ENV === 'dev' ? req.body.user_id : req.session.passport.user;
-            
             if(req.query.order_by && checkFormInputs(req.query.order_by, regex_order)) options.order_by = req.query.order_by;
             if(req.query.sens === 'desc') options.sens = req.query.sens;
             if(req.query.page && checkFormInputs(req.query.page, regex_mod.regex_page)) options.page = req.query.page;
@@ -120,19 +125,24 @@ module.exports = {
             }
 
             let responseDeckModel = await Deck.findOneUserDeck(options);
-            let responseHolyBookModel = await HolyBook.getHolyBook(options);
+            let responseEdenModel = await Eden.getEdenTotal(options);
+            let responseHolyBookModel = await HolyBook.getHolyBookTotal(options);
+            let responseRegisterModel = await Register.getRegisterTotal(options);
+
             if(responseHolyBookModel.code === 200 && responseDeckModel.code === 200){
                 let newObj = {
                     code: 200,
                     message: {
                         ...responseDeckModel.message,
-                        holyBookQty: responseHolyBookModel.message.qty
+                        edenQty: responseEdenModel.message ? Number(responseEdenModel.message) : 0,
+                        holyBookQty: responseHolyBookModel.message ? Number(responseHolyBookModel.message) : 0,
+                        registerQty: responseRegisterModel.message ? Number(responseRegisterModel.message) : 0
                     }
                 }
-
                 return res.status(newObj.code).json(newObj) 
             }
         } catch (e) {
+            console.log(e)
             res.status(e.code).json(e);
         }
     },

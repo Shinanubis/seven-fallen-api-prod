@@ -8,8 +8,6 @@ function parseArray(arr){
     let newArr = '';
     arr.unshift('{');
     arr.push('}');
-
-    console.log("[new arr] : ", newArr) 
 }
 
 function Import (){

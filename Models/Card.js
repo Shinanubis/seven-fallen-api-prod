@@ -69,7 +69,6 @@ Card.prototype.getCardsByType = async function(options){
             result = registerCards.rows[0].cards;
             serializedObj = serialize( [...result], options.type);
         }
-        console.log(serializedObj)
         return return_success(serializedObj);
     }catch(e){
         return custom_errors(e)
@@ -89,13 +88,11 @@ Card.prototype.updateCardsByType = async function(options){
         if(ownerResult.rows.length === 0){
             throw { code: '02000' }
         }
-        console.log("options : ", options)
         if(EDEN.includes(options.type)){
             let counter = 0;
             let edenCardsBefore = await this.db.query('SELECT cards, qty FROM edens WHERE deck_id = $1', [options.deck_id]);
             let oppositeTypeObj = serializeByOppositeType(edenCardsBefore.rows[0].cards, options.type);
             let newObj = Object.assign(oppositeTypeObj, options.payload);
-            console.log("new obj in register : ", newObj)
             Object.keys(newObj).map(elmt => counter += Number(newObj[elmt].qty));
             edenCards = await this.db.query('UPDATE edens SET cards = $1, qty = $2 WHERE deck_id = $3',[deserialize(newObj) , counter, options.deck_id]);
         }
@@ -105,7 +102,6 @@ Card.prototype.updateCardsByType = async function(options){
             let holybookCardsBefore = await this.db.query('SELECT cards FROM holy_books WHERE deck_id = $1', [options.deck_id]);
             let oppositeTypeObj = serializeByOppositeType(holybookCardsBefore.rows[0].cards, options.type);
             let newObj = Object.assign(oppositeTypeObj, options.payload);
-            console.log("new obj in register : ", newObj)
             Object.keys(newObj).map(elmt => counter += Number(newObj[elmt].qty));
             holybookCards = await this.db.query('UPDATE holy_books SET cards = $1, qty = $2 WHERE deck_id = $3',[deserialize(newObj) ,counter ,options.deck_id]);
         }
@@ -115,7 +111,6 @@ Card.prototype.updateCardsByType = async function(options){
             let registerCardsBefore = await this.db.query('SELECT cards FROM registers WHERE deck_id = $1', [options.deck_id]);
             let oppositeTypeObj = serializeByOppositeType(registerCardsBefore.rows[0].cards, options.type);
             let newObj = Object.assign(oppositeTypeObj, options.payload);
-            console.log("new obj in register : ", newObj)
             Object.keys(newObj).map(elmt => counter += Number(newObj[elmt].qty));
             registerCards = await this.db.query('UPDATE registers SET cards = $1, qty = $2 WHERE deck_id = $3',[deserialize(newObj) ,counter ,options.deck_id]);
         }

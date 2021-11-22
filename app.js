@@ -9,6 +9,26 @@ const db = require('./Services/database/db');
 const cors = require("cors");
 const cron = require("node-cron");
 
+//constantes
+const { EVERY_MIDNIGHT } = require('./constantes/jobsTiming');
+
+//Models
+const TypeModel = require('./Models/Type');
+const RaritieModel = require('./Models/Raritie');
+const KingdomModel = require('./Models/Kingdom');
+const ExtensionModel = require('./Models/Extension');
+
+const Type = new TypeModel();
+const Raritie = new RaritieModel();
+const Kingdom = new KingdomModel();
+const Extension = new ExtensionModel();
+
+//Services 
+const WarehouseHttp = require('./Services/warehouse');
+
+//Jobs
+const { updateDb } = require('./jobs/databaseUpdate');
+
 let redis_store = {};
 let redis_client = {};
 
@@ -31,11 +51,65 @@ app.set("trust proxy", true)
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
 
-/*Jobs scheduling*/
-// cron.schedule('* * * * *', () => {
-//   let now = new Date();
-//   console.log(`[${now.getHours()} : ${now.getMinutes()} : ${now.getSeconds()}] hello`)
-// })
+//Init settings app database
+async function fillSettings(){
+
+  let responseDbTypes =  await Type.getTypesList();
+  let responseDbRaritie = await Raritie.getRaritiesList();
+  let responseDbKingdoms = await Kingdom.getKingdomsList();
+  let responseDbExtensions = await Extension.getExtensionsList()
+
+  if(
+      responseDbTypes.length === 0 ||
+      responseDbRaritie.length === 0 ||
+      responseDbKingdoms.length === 0 ||
+      responseDbExtensions.length === 0
+    ){
+
+    //empting all tables
+    await Extension.emptyExtensions();
+    await Type.emptyTypes();
+    await Kingdom.emptyKingdoms();
+    await Raritie.emptyRarities();
+    
+    //fetch lists
+    let responseServiceTypeList = await WarehouseHttp.getTypesList();
+    let responseServiceRaritieList = await WarehouseHttp.getRaritiesList();
+    let responseServiceKingdomsList = await WarehouseHttp.getKingdomsList();
+    let responseServiceExtensionsList = await WarehouseHttp.getExtensionsList();
+
+    if(
+        responseServiceTypeList.code === 200 && 
+        responseServiceRaritieList.code === 200 &&
+        responseServiceKingdomsList.code === 200 &&
+        responseServiceExtensionsList.code === 200
+      ){
+        
+        //upsert all the lists
+        for(let elmt of responseServiceTypeList.message){
+              await Type.upsertTypesList(elmt);
+        }
+
+        for(let elmt of responseServiceRaritieList.message){
+              await Raritie.upsertRaritiesList(elmt);
+        }
+
+        for(let elmt of responseServiceKingdomsList.message){
+              await Kingdom.upsertKingdomsList(elmt);
+        }
+
+        for(let elmt of responseServiceExtensionsList.message){
+              await Extension.upsertExtensionsList(elmt);
+        }  
+
+    }
+  }
+}
+
+fillSettings();
+
+//Jobs scheduling
+cron.schedule(EVERY_MIDNIGHT, updateDb, {scheduled: true, timezone: "Europe/Paris" })
 
 if(process.env.NODE_ENV === 'prod'){
   app.use(
@@ -70,6 +144,9 @@ app.use('/api',routeProfile);
 app.use('/api', routeDecks);
 app.use('/api', routeExport);
 app.use('/api', routeImport);
+app.get('*', function(req, res){
+  res.status(404).send('Wrong place ...');
+})
 
 app.listen(PORT, function () {
   console.log(`7 fallen available on port ${PORT}`)

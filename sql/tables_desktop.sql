@@ -24,38 +24,72 @@ CREATE TABLE decks(
 DROP TABLE IF EXISTS edens;
 CREATE TABLE edens(
     deck_id INT,
-    cards TEXT[][],
+    card_id INT,
     qty INT,
-    PRIMARY KEY(deck_id),
+    PRIMARY KEY(deck_id, card_id),
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS registers;
 CREATE TABLE registers(
     deck_id INT,
-    cards TEXT[][],
+    card_id INT,
     qty INT,
-    PRIMARY KEY(deck_id),
+    PRIMARY KEY(deck_id, card_id),
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS holy_books;
 CREATE TABLE holy_books(
     deck_id INT,
-    cards TEXT[][],
+    card_id INT,
     qty INT,
-    PRIMARY KEY(deck_id),
+    PRIMARY KEY(deck_id, card_id),
     FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS types;
+CREATE TABLE types(
+    id INT,
+    lang VARCHAR(5),
+    type_name VARCHAR(16),
+    PRIMARY KEY(id, lang)
+);
+
+DROP TABLE IF EXISTS rarities;
+CREATE TABLE rarities(
+    id INT,
+    lang VARCHAR(5),
+    raritie_name VARCHAR(16),
+    PRIMARY KEY(id, lang)
+);
+
+DROP TABLE IF EXISTS kingdoms;
+CREATE TABLE kingdoms(
+    id INT,
+    lang VARCHAR(5),
+    kingdom_name VARCHAR(32),
+    short_name VARCHAR(8),
+    PRIMARY KEY(id, lang)
+);
+
+DROP TABLE IF EXISTS extensions;
+CREATE TABLE extensions(
+    id INT,
+    lang VARCHAR(5),
+    extension_name VARCHAR(32),
+    short_name VARCHAR(8),
+    PRIMARY KEY(id, lang)
 );
 
 CREATE OR REPLACE FUNCTION update_decks_qty() RETURNS TRIGGER AS $$
 BEGIN
 UPDATE decks SET num_cards = (SELECT SUM(qty) FROM (
-SELECT qty FROM edens AS e WHERE e.deck_id = OLD.deck_id
+SELECT SUM(qty) FROM edens AS e WHERE e.deck_id = OLD.deck_id
 UNION ALL
-SELECT qty FROM registers AS r WHERE r.deck_id = OLD.deck_id
+SELECT SUM(qty) FROM registers AS r WHERE r.deck_id = OLD.deck_id
 UNION ALL
-SELECT qty FROM holy_books AS h WHERE h.deck_id = OLD.deck_id 
+SELECT SUM(qty) FROM holy_books AS h WHERE h.deck_id = OLD.deck_id 
 ) AS sub
 ) WHERE decks.id = OLD.deck_id;
 RETURN NEW;
@@ -63,21 +97,21 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_update_decks
-AFTER UPDATE
+AFTER UPDATE OR INSERT OR DELETE
 ON edens
 FOR EACH ROW
 EXECUTE PROCEDURE update_decks_qty();
 
 CREATE TRIGGER trigger_update_decks
-AFTER UPDATE
+AFTER UPDATE OR INSERT OR DELETE
 ON registers
 FOR EACH ROW
 EXECUTE PROCEDURE update_decks_qty();
 
 CREATE TRIGGER trigger_update_decks
-AFTER UPDATE
+AFTER UPDATE OR INSERT OR DELETE
 ON holy_books
 FOR EACH ROW
 EXECUTE PROCEDURE update_decks_qty();
 
-GRANT SELECT, INSERT, DELETE, UPDATE, TRIGGER ON users, decks, edens, holy_books, registers TO pablo;
+GRANT SELECT, INSERT, DELETE, UPDATE, TRUNCATE, TRIGGER ON users, decks, edens, holy_books, registers, types, rarities, kingdoms, extensions TO pablo;

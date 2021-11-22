@@ -107,50 +107,30 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 //Display all cards owned by a deck and by type
 Deck.prototype.findAllDeckCards = async function(options){
     try{
-        let requestTwo =`SELECT card_type, array_agg(ARRAY[card_id, card_type, image_path, qty, max]) AS cards FROM (
-                            SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS qty, unnest(cards[:][5:5]) AS max FROM edens WHERE deck_id = $1
-                        ) AS edens 
-                        GROUP BY edens.card_type UNION ALL 
-                         SELECT card_type, array_agg(ARRAY[card_id, card_type, image_path, qty, max]) AS cards FROM (
-                            SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS qty, unnest(cards[:][5:5]) AS max FROM registers WHERE deck_id = $1
-                         ) AS registers 
-                         GROUP BY registers.card_type UNION ALL 
-                        SELECT card_type, array_agg(ARRAY[card_id, card_type, image_path, qty, max]) AS cards FROM (
-                            SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type, unnest(cards[:][3:3]) AS image_path, unnest(cards[:][4:4]) AS qty, unnest(cards[:][5:5]) AS max FROM holy_books WHERE deck_id = $1
-                        ) AS holy_books 
-                        GROUP BY holy_books.card_type` 
+        let requestOne ='SELECT card_id, qty FROM edens WHERE deck_id = $1';
+        let requestTwo = 'SELECT card_id, qty FROM holy_books WHERE deck_id = $1';
+        let requestThree = 'SELECT card_id, qty FROM registers WHERE deck_id = $1';
+        let request = [requestOne, requestTwo, requestThree].join(' UNION ALL ');
         let query_params = [];
-        query_params.push(options.deck_id);
-        let result = await this.db.query(requestTwo, query_params);
-        
-        let newResult = result.rows.filter(elmt => elmt.card_type !== null);
-        let newResultPerType = newResult.reduce((map, obj) =>{
-            map[obj.card_type] = obj.cards.reduce((map1, elmt) => {
-                map1[elmt[0]] = {image_path: elmt[2], qty: elmt[3], max: elmt[4]}
-                return map1;
-            },{});
-            return map;
-        } ,{});
 
-        return return_success(newResultPerType);
+        query_params.push(options.deck_id);
+
+        const {rows}= await this.db.query(request, query_params);
+        return return_success(rows);
     }catch(e){
         return custom_errors(e);
     }
 }
+
 // Display all user decks
 Deck.prototype.findAllUserDecks = async function (options) {
     try {
-        let request = `SELECT id, deck_name, kingdom, num_cards, divinity FROM decks\n
-                       LEFT JOIN (SELECT deck_id, card_id AS divinity FROM (\n
-                       SELECT deck_id, unnest(cards[:][1:1]) AS card_id, unnest(cards[:][2:2]) AS card_type FROM edens\n
-                       ) AS result WHERE card_type = $2) AS divinities\n
-                       ON decks.id = divinities.deck_id\n
-                       WHERE user_id = $1`;
-        let query_params = [options.user_id, 1];
+        let request = `SELECT id, deck_name, kingdom, num_cards, created_at  FROM decks WHERE user_id = $1`;
+        let query_params = [options.user_id];
         if(options.order_by && allowed_order.includes(options.order_by)){
             request += ' ORDER BY ' + options.order_by;
         }else{
-            request += ' ORDER BY id';
+            request += ' ORDER BY created_at';
         }
 
         if(options.sens){
@@ -158,19 +138,21 @@ Deck.prototype.findAllUserDecks = async function (options) {
         }
 
         if(options.page && options.size){
-            request += ' OFFSET $3 FETCH NEXT $4 ROW ONLY';
+            request += ' OFFSET $2 FETCH NEXT $3 ROW ONLY';
             query_params.push(pagination(options.page, options.size), options.size);
         }else{
-            request += ' OFFSET $3 FETCH NEXT $4 ROW ONLY';
+            request += ' OFFSET $2 FETCH NEXT $3 ROW ONLY';
             query_params.push(pagination(1, 10), 10);
         }
 
         const counter = await this.db.query("SELECT COUNT(*) as total FROM decks WHERE user_id = $1", [options.user_id]);
         const { rows } = await this.db.query(request, query_params);
+
         const newObj = [
             counter.rows[0].total - 0,
             ...rows
         ]
+
         return return_success(newObj);
     } catch (e) {
         return custom_errors(e);
@@ -243,27 +225,8 @@ Deck.prototype.findManyByKingdom = async function (options) {
 Deck.prototype.createOne = async function (options) {
     try {
         let request = 'INSERT INTO decks(user_id, deck_name, kingdom) VALUES($1, $2, $3) RETURNING id,deck_name'
-        
         let { rows } = await this.db.query(request, [options.user_id, options.deck_name, options.kingdom]);
-
-        //check if eden exist if not INSERT
-        let edenExist = await this.db.query('SELECT 1 WHERE EXISTS(SELECT * FROM edens WHERE deck_id = $1)', [rows[0].id]);
-        if(edenExist.rows.length === 0){
-            let createEden = await this.db.query('INSERT INTO edens(deck_id,cards,qty) VALUES($1,$2,$3)', [rows[0].id, [], 0]);
-        }
-
-        //check if holybook exist if not INSERT
-        let holyBookExist = await this.db.query('SELECT 1 WHERE EXISTS(SELECT * FROM holy_books WHERE deck_id = $1)', [rows[0].id]);
-        if(holyBookExist.rows.length === 0){
-            let createHoolyBook = await this.db.query('INSERT INTO holy_books(deck_id,cards,qty) VALUES($1,$2,$3)', [rows[0].id, [], 0]);
-        }
-
-        //check if register exist if not INSERT
-        let registerkExist = await this.db.query('SELECT 1 WHERE EXISTS(SELECT * FROM registers WHERE deck_id = $1)', [rows[0].id])
-        if(registerkExist.rows.length === 0){
-            let createHoolyBook = await this.db.query('INSERT INTO registers(deck_id,cards,qty) VALUES($1,$2,$3)', [rows[0].id, [], 0]);
-        }
-
+        console.log(rows)
         return return_success(rows);
     } catch (e) {
         e.field = options.deck_name;

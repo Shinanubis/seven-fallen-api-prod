@@ -16,7 +16,6 @@ module.exports = {
                 .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err.code).json(err));
         }catch(e){
-            console.log("COntroller : " , e)
             res.status(e.code).json(e);
         }
     },
@@ -41,7 +40,6 @@ module.exports = {
                 .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err.code).json(err));
         }catch(e){
-            console.log(e)  
             res.status(e.code).json(e);
         }
     },
