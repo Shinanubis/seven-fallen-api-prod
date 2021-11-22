@@ -1,4 +1,4 @@
-const {LANG} = require('../../constantes/typesByCategory');
+const {LANG, TYPES} = require('../../constantes/typesByCategory');
 const axios = require("axios");
 const dotenv = require('dotenv');
 dotenv.config();
@@ -145,13 +145,14 @@ async function getExtensionsList(){
       }
 }
 
-async function getDivinitiesList(){
+async function getCardsList(){
       try {
             let datas = [];
             let newArr = [];
 
             for(let lang of LANG){
-                  let {status, statusText, data} = await axios.get(process.env.CARD_WAREHOUSE + 'extensions/all/' + lang, axiosOptions);
+                  let {status, statusText, data} = await axios.get(`${process.env.CARD_WAREHOUSE}cards/all/${lang}?types=[${TYPES.join()}]`, axiosOptions);
+                  console.log(data)
                   if(status >= 200 && status < 400 && statusText === 'OK'){
                         for(let elmt of data){
                               elmt.lang = lang
@@ -189,5 +190,6 @@ module.exports = {
       getTypesList,
       getRaritiesList,
       getKingdomsList,
-      getExtensionsList
+      getExtensionsList,
+      getCardsList
 };

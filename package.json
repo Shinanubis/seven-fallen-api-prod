@@ -4,6 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "init:db": "",
     "watch": "pm2 restart app.js --watch && pm2 logs"
   },
   "repository": {

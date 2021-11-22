@@ -2,7 +2,8 @@
 
 ## Server
 ### Server with NodeJs + Express
-1. **Create app** 
+1. **Create app**
+      - [x] Create the init db script
 2. **Create the Routes**
       1. Cards Route
             - [ ] **GET** /card?page=1&size=20&types=[1,2,3,4,5]&kingdoms=[1,2,3,4]&name=Fafnir 

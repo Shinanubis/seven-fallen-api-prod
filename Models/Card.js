@@ -121,5 +121,23 @@ Card.prototype.updateCardsByType = async function(options){
     }
 }
 
+Card.prototype.upsert = async function(payload){
+    try{
+        let request = `INSERT INTO cards(
+                       id, lang_id, type_id, type_name, extension_id, extension_name, kingdom_id, kingdom_name, raritie_id, raritie_name,\n
+                       capacities, classes, card_name, image_path, nb_max_per_deck, ec_cost\n 
+                       ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n
+                       ON CONFLICT (id)\n 
+                       DO UPDATE SET id = $1, lang_id = $2, type_id = $3, type_name = $4, extension_id = $5, extension_name = $6, kingdom_id = $7,\n
+                       kingdom_name = $8, raritie_id = $9, raritie_name = $10, capacities = $11, classes = $12, card_name = $13, image_path = $14, \n
+                       nb_max_per_deck = $15, ec_cost = $16`;
+        let query_params = [payload.id, payload.lang_id, payload.type, payload.short_name];
+        let result = await this.db.query(request, query_params);
+        return return_success(result)
+    }catch(error){
+        return custom_errors(error)
+    }
+}
+
 module.exports = Card; 
 

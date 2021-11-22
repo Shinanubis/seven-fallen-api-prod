@@ -17,7 +17,7 @@ Extension.prototype.emptyExtensions = async function(){
 
 Extension.prototype.getExtensionsList = async function (lang){
       try{
-            let request = 'SELECT * FROM extensions WHERE lang = $1';
+            let request = 'SELECT * FROM extensions WHERE lang_id = $1';
             let query_params = [lang];
             let {rows} = await this.db.query(request,query_params);
             return rows;
@@ -28,9 +28,9 @@ Extension.prototype.getExtensionsList = async function (lang){
 
 Extension.prototype.upsertExtensionsList = async function(payload){
       try{
-            let request = `INSERT INTO extensions(id, lang, extension_name, short_name) VALUES($1, $2, $3, $4)\n
-                           ON CONFLICT (id, lang)\n 
-                           DO UPDATE SET id = $1, lang = $2, extension_name = $3, short_name = $4`;
+            let request = `INSERT INTO extensions(id, lang_id, extension_name, short_name) VALUES($1, $2, $3, $4)\n
+                           ON CONFLICT (id)\n 
+                           DO UPDATE SET id = $1, lang_id = $2, extension_name = $3, short_name = $4`;
             let query_params = [payload.id, payload.lang, payload.name, payload.short_name];
             let result = await this.db.query(request, query_params);
             return return_success(result)

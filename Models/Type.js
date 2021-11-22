@@ -6,6 +6,17 @@ function Type(){
       this.db = pool;
 }
 
+Type.prototype.create = async function(payload){
+      try{
+            let request = 'INSERT INTO types(id, lang_id, type_name) VALUES($1, $2, $3)';
+            let query_params = [payload.id, payload.lang_id, payload.name];
+            let result = await this.db.query(request, query_params);
+            return result.rowCount === 1;
+      }catch(error){
+            return false;
+      }
+}
+
 Type.prototype.emptyTypes = async function(){
       try{
             let request = 'TRUNCATE TABLE types';
@@ -17,7 +28,7 @@ Type.prototype.emptyTypes = async function(){
 
 Type.prototype.getTypesList = async function (lang){
       try{
-            let request = 'SELECT * FROM types WHERE lang = $1';
+            let request = 'SELECT * FROM types WHERE lang_id = $1';
             let query_params = [lang];
             let {rows} = await this.db.query(request,query_params);
             return rows;
@@ -28,9 +39,9 @@ Type.prototype.getTypesList = async function (lang){
 
 Type.prototype.upsertTypesList = async function(payload){
       try{
-            let request = `INSERT INTO types(id, lang, type_name) VALUES($1, $2, $3)\n
-                           ON CONFLICT (id, lang)\n 
-                           DO UPDATE SET id = $1, lang = $2, type_name = $3`;
+            let request = `INSERT INTO types(id, lang_id, type_name) VALUES($1, $2, $3)\n
+                           ON CONFLICT (id)\n 
+                           DO UPDATE SET id = $1, lang_id = $2, type_name = $3`;
             let query_params = [payload.id, payload.lang, payload.name];
             let result = await this.db.query(request, query_params);
             return return_success(result)
