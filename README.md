@@ -5,9 +5,13 @@
 1. **Create app** 
 2. **Create the Routes**
       1. Cards Route
-            - [ ] /card Params -> page, size, types, kingdoms, name Method -> GET
-            - [ ] /card/:id Method -> GET
-            - [ ] /card/type/:id Method -> GET
+            - [ ] /card 
+                        Params -> page, size, types, kingdoms, name 
+                        Method -> GET
+            - [ ] /card/:id 
+                        Method -> GET
+            - [ ] /card/type/:id 
+                        Method -> GET
             - [ ] /card/kingdom/:kingdom Params -> page, size Method -> GET
 
 ### Server caching with Redis
