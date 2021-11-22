@@ -7,39 +7,39 @@
 
 ### Server caching with Redis
 1. Install Redis
-      - sudo apt update
-      - sudo apt install redis-server
-      - sudo nano /etc/redis/redis.conf
-      - supervised no -> systemd
-      - sudo systemctl restart redis.service
+      - [x] sudo apt update
+      - [x] sudo apt install redis-server
+      - [x] sudo nano /etc/redis/redis.conf
+      - [x] supervised no -> systemd
+      - [x] sudo systemctl restart redis.service
 2. Redis Test
-      - sudo systemctl status redis
-      - redis-cli
-      - ping
-      - set test "It's working!"
-      - get test
-      - exit
-      - sudo systemctl restart redis
-      - redis-cli
-      - get test
-      - exit
+      - [x] sudo systemctl status redis
+      - [x] redis-cli
+      - [x] ping
+      - [x] set test "It's working!"
+      - [x] get test
+      - [x] exit
+      - [x] sudo systemctl restart redis
+      - [x] redis-cli
+      - [x] get test
+      - [x] exit
 3. Link Redis to Localhost
-      - sudo nano /etc/redis/redis.conf
-      - bind 127.0.0.1 ::1
-      - sudo systemctl restart redis
-      - sudo apt install net-tools
-      - sudo netstat -lnp | grep redis
+      - [x]sudo nano /etc/redis/redis.conf
+      - [x]bind 127.0.0.1 ::1
+      - [x]sudo systemctl restart redis
+      - [x]sudo apt install net-tools
+      - [x]sudo netstat -lnp | grep redis
 4. Redis password setting
-      - sudo nano /etc/redis/redis.conf
-      - uncomment **# requirepass foobared** -> **requirepass newpasswordofthedeath**
-      - sudo systemctl restart redis.service
-      - redis-cli
-      - set key1 10
-      - (error) NOAUTH Authentication required.
-      - auth your_redis_password
-      - set key1 10
-      - get key1
-      - quit
+      - [x]sudo nano /etc/redis/redis.conf
+      - [x]uncomment **# requirepass foobared** -> **requirepass newpasswordofthedeath**
+      - [x]sudo systemctl restart redis.service
+      - [x]redis-cli
+      - [x]set key1 10
+      - [x](error) NOAUTH Authentication required.
+      - [x]auth your_redis_password
+      - [x]set key1 10
+      - [x]get key1
+      - [x]quit
 
 ### Route testing with postman
 1. Install postman for local mode **https://www.postman.com/downloads/**
