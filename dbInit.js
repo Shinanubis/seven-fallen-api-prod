@@ -11,6 +11,7 @@ const RaritieModel = require('./Models/Raritie');
 const KingdomModel = require('./Models/Kingdom');
 const ExtensionModel = require('./Models/Extension');
 
+
 const Type = new TypeModel();
 const Raritie = new RaritieModel();
 const Kingdom = new KingdomModel();
@@ -36,6 +37,7 @@ module.exports.test = async function(){
     let responseServiceRaritieList = await WarehouseHttp.getRaritiesList();
     let responseServiceKingdomsList = await WarehouseHttp.getKingdomsList();
     let responseServiceExtensionsList = await WarehouseHttp.getExtensionsList();
+    let responseServiceCardsList = await WarehouseHttp.getCardsList();
 
     if(
         responseServiceTypeList.code === 200 && 
