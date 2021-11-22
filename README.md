@@ -24,22 +24,22 @@
       - [x] get test
       - [x] exit
 3. Link Redis to Localhost
-      - [x]sudo nano /etc/redis/redis.conf
-      - [x]bind 127.0.0.1 ::1
-      - [x]sudo systemctl restart redis
-      - [x]sudo apt install net-tools
-      - [x]sudo netstat -lnp | grep redis
+      - [x] sudo nano /etc/redis/redis.conf
+      - [x] bind 127.0.0.1 ::1
+      - [x] sudo systemctl restart redis
+      - [x] sudo apt install net-tools
+      - [x] sudo netstat -lnp | grep redis
 4. Redis password setting
-      - [x]sudo nano /etc/redis/redis.conf
-      - [x]uncomment **# requirepass foobared** -> **requirepass newpasswordofthedeath**
-      - [x]sudo systemctl restart redis.service
-      - [x]redis-cli
-      - [x]set key1 10
-      - [x](error) NOAUTH Authentication required.
-      - [x]auth your_redis_password
-      - [x]set key1 10
-      - [x]get key1
-      - [x]quit
+      - [x] sudo nano /etc/redis/redis.conf
+      - [x] uncomment **# requirepass foobared** -> **requirepass newpasswordofthedeath**
+      - [x] sudo systemctl restart redis.service
+      - [x] redis-cli
+      - [x] set key1 10
+      - [x] NOAUTH Authentication required.
+      - [x] auth your_redis_password
+      - [x] set key1 10
+      - [x] get key1
+      - [x] quit
 
 ### Route testing with postman
 1. Install postman for local mode **https://www.postman.com/downloads/**
