@@ -23,34 +23,6 @@ const Raritie = new RaritieModel();
 const Kingdom = new KingdomModel();
 const Extension = new ExtensionModel();
 
-//Services 
-const WarehouseHttp = require('./Services/warehouse');
-
-//Jobs
-const { updateDb } = require('./jobs/databaseUpdate');
-
-let redis_store = {};
-let redis_client = {};
-
-if(process.env.NODE_ENV === 'prod'){
-  redis_store = require('connect-redis')(session);
-  redis_client = redis.createClient();
-}
-
-// Routes
-const routeUser = require('./Routes/User');
-const routeAuth = require('./Routes/Auth');
-const routeProfile = require('./Routes/Profile');
-const routeDecks = require("./Routes/Decks");
-const routeExport = require("./Routes/Export");
-const routeImport = require("./Routes/Import");
-
-//Port setting
-const PORT = process.env.NODE_PORT || 3000;
-app.set("trust proxy", true)
-app.use(express.urlencoded({extended:true}))
-app.use(express.json())
-
 //Init settings app database
 async function fillSettings(){
 
@@ -106,7 +78,36 @@ async function fillSettings(){
   }
 }
 
+//Services 
+const WarehouseHttp = require('./Services/warehouse');
+
+//Jobs
+const { updateDb } = require('./jobs/databaseUpdate');
+
+let redis_store = {};
+let redis_client = {};
+
+if(process.env.NODE_ENV === 'prod'){
+  redis_store = require('connect-redis')(session);
+  redis_client = redis.createClient();
+}
+
+// Routes
+const routeUser = require('./Routes/User');
+const routeAuth = require('./Routes/Auth');
+const routeProfile = require('./Routes/Profile');
+const routeDecks = require("./Routes/Decks");
+const routeExport = require("./Routes/Export");
+const routeImport = require("./Routes/Import");
+
+//Setting database the first time
 fillSettings();
+
+//Port setting
+const PORT = process.env.NODE_PORT || 3000;
+app.set("trust proxy", true)
+app.use(express.urlencoded({extended:true}))
+app.use(express.json())
 
 //Jobs scheduling
 cron.schedule(EVERY_MIDNIGHT, updateDb, {scheduled: true, timezone: "Europe/Paris" })

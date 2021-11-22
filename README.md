@@ -16,6 +16,10 @@
       3. User Route
             - [x] **GET, POST** /user?page=1&size=20
             - [x] **GET, PATCH, DELETE** /user/:id
+      4. Import Route
+            - [x] **GET** /import
+      5. Export Route
+            - [x] **GET** /export 
 
 ### Server caching with Redis
 1. Install Redis
