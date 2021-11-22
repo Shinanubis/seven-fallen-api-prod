@@ -5,7 +5,7 @@
 1. Create app 
 2. Create the Routes + Controller + Models
 
-## Server caching with Redis
+### Server caching with Redis
 1. Install Redis
       - sudo apt update
       - sudo apt install redis-server
