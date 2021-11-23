@@ -17,4 +17,14 @@ Language.prototype.create = async function(payload){
       }
 }
 
+Language.prototype.getAll = async function(payload){
+      try{
+            let request = 'SELECT * FROM languages';
+            let {rows} = await this.db.query(request);
+            return return_success(rows);
+      }catch(error){
+            return custom_errors(error);
+      }
+}
+
 module.exports = Language;

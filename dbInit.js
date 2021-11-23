@@ -10,8 +10,9 @@ const TypeModel = require('./Models/Type');
 const RaritieModel = require('./Models/Raritie');
 const KingdomModel = require('./Models/Kingdom');
 const ExtensionModel = require('./Models/Extension');
+const CardModel = require('./Models/Card');
 
-
+const Card = new CardModel();
 const Type = new TypeModel();
 const Raritie = new RaritieModel();
 const Kingdom = new KingdomModel();
@@ -43,29 +44,35 @@ module.exports.test = async function(){
         responseServiceTypeList.code === 200 && 
         responseServiceRaritieList.code === 200 &&
         responseServiceKingdomsList.code === 200 &&
-        responseServiceExtensionsList.code === 200
+        responseServiceExtensionsList.code === 200 &&
+        responseServiceCardsList.code === 200
       ){
         
-        //upsert all the lists
+        //insert all the lists
         for(let elmt of LANG_ARRAY){
               await Language.create(elmt);
         }
 
         for(let elmt of responseServiceTypeList.message){
-              await Type.upsertTypesList(elmt);
+              await Type.create(elmt);
         }
 
-      //   for(let elmt of responseServiceRaritieList.message){
-      //         await Raritie.upsertRaritiesList(elmt);
-      //   }
+        for(let elmt of responseServiceRaritieList.message){
+              await Raritie.create(elmt);
+        }
 
-      //   for(let elmt of responseServiceKingdomsList.message){
-      //         await Kingdom.upsertKingdomsList(elmt);
-      //   }
+        for(let elmt of responseServiceKingdomsList.message){
+              await Kingdom.create(elmt);
+        }
 
-      //   for(let elmt of responseServiceExtensionsList.message){
-      //         await Extension.upsertExtensionsList(elmt);
-      //   }  
+        for(let elmt of responseServiceExtensionsList.message){
+              await Extension.create(elmt);
+        }
+
+        for(let elmt of responseServiceCardsList.message.entries()){
+              let payload = {card_id: elmt[0], ...elmt[1]}
+              await Card.create(payload);
+        }  
 
     }
   }

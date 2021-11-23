@@ -35,6 +35,21 @@ function Card(){
     this.db = pool;
 }
 
+Card.prototype.create = async function(payload){
+      try{
+            let counter = 1;
+            let requestPartOne = `INSERT INTO cards(${Object.keys(payload).join()}) VALUES( `;
+            let requestPartTwo = Object.values(payload).map(elmt => '$' + counter++).join();
+            let request = requestPartOne + requestPartTwo + ' )';
+            let query_params = [...Object.values(payload)] 
+            let result = await this.db.query(request, query_params);
+            return result.rowCount === 1;
+      }catch(error){
+            console.log(error)
+            return false;
+      }
+}
+
 Card.prototype.getCardsByType = async function(options){
     try{
         let edenCards = [];

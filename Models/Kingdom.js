@@ -6,6 +6,21 @@ function Kingdom(){
       this.db = pool;
 }
 
+Kingdom.prototype.create = async function(payload){
+      try{
+            let request = 'INSERT INTO kingdoms(kingdom_id, lang_id, kingdom_name, short_name) VALUES($1, $2, $3, $4)';
+            let query_params = [payload.id, payload.lang_id, payload.name, payload.short_name];
+            let result = await this.db.query(request, query_params);
+            console.log("[Kingdom][success] : ", result.rowCount === 1)
+            return result.rowCount === 1;
+      }catch(error){
+            console.log("[Kingdom][error] : ",error)
+            return false;
+      }finally{
+            console.log("[Kingdom insert][done]")
+      }
+}
+
 Kingdom.prototype.emptyKingdoms = async function(){
       try{
             let request = 'TRUNCATE TABLE kingdoms';

@@ -6,6 +6,18 @@ function Extension(){
       this.db = pool;
 }
 
+Extension.prototype.create = async function(payload){
+      try{
+            let request = 'INSERT INTO extensions(extension_id, lang_id, extension_name, short_name) VALUES($1, $2, $3, $4)';
+            let query_params = [payload.id, payload.lang_id, payload.name, payload.short_name];
+            let result = await this.db.query(request, query_params);
+            return result.rowCount === 1;
+      }catch(error){
+            console.log(error)
+            return false;
+      }
+}
+
 Extension.prototype.emptyExtensions = async function(){
       try{
             let request = 'TRUNCATE TABLE extensions';

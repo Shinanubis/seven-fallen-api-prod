@@ -6,6 +6,18 @@ function Raritie(){
       this.db = pool;
 }
 
+Raritie.prototype.create = async function(payload){
+      try{
+            let request = 'INSERT INTO rarities(raritie_id, lang_id, raritie_name) VALUES($1, $2, $3)';
+            let query_params = [payload.id, payload.lang_id, payload.name];
+            let result = await this.db.query(request, query_params);
+            return result.rowCount === 1;
+      }catch(error){
+            console.log(error)
+            return false;
+      }
+}
+
 Raritie.prototype.emptyRarities = async function(){
       try{
             let request = 'TRUNCATE TABLE rarities';
