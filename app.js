@@ -9,11 +9,6 @@ const db = require('./Services/database/db');
 const cors = require("cors");
 const cron = require("node-cron");
 
-//constantes
-const { EVERY_MIDNIGHT } = require('./constantes/jobsTiming');
-
-//Jobs
-const { updateDb } = require('./jobs/databaseUpdate');
 
 let redis_store = {};
 let redis_client = {};
@@ -37,8 +32,6 @@ app.set("trust proxy", true)
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
 
-//Jobs scheduling
-cron.schedule(EVERY_MIDNIGHT, updateDb, {scheduled: true, timezone: "Europe/Paris" })
 
 if(process.env.NODE_ENV === 'prod'){
   app.use(

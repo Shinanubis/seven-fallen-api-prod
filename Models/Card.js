@@ -2,7 +2,7 @@ const pool = require('../Services/database/db');
 const custom_errors = require('../Errors/CustomsErrors');
 const return_success = require('../Utils/returnSuccess');
 const {EDEN, HOLYBOOK, REGISTER} = require('../constantes/typesByCategory');
-
+const {includes_all} = require('../Utils/arrays');
 
 function serializeByOppositeType(arr, filterBy){
     let newObj  = {};
@@ -32,22 +32,35 @@ function deserialize(obj){
 }
 
 function Card(){
+    this.tables_name = [];
     this.db = pool;
 }
 
-Card.prototype.create = async function(payload){
-      try{
-            let counter = 1;
-            let requestPartOne = `INSERT INTO cards(${Object.keys(payload).join()}) VALUES( `;
-            let requestPartTwo = Object.values(payload).map(elmt => '$' + counter++).join();
-            let request = requestPartOne + requestPartTwo + ' )';
-            let query_params = [...Object.values(payload)] 
-            let result = await this.db.query(request, query_params);
-            return result.rowCount === 1;
-      }catch(error){
-            console.log(error)
-            return false;
-      }
+Card.prototype.check = async function(options){
+    try{
+        let request = "SELECT * FROM decks WHERE id = $1 AND user_id = $2";
+        let result = await this.db.query(request,[options.params.deckId, options.user_id]);
+        if(result.rows.length === 0){
+            throw { code: '02000' }
+        }
+        
+        return true;
+    }catch(error){
+        return false;
+    }
+}
+
+Card.prototype.createCard = async function(options){
+        try{
+
+
+
+
+        
+        return return_success("Created successfully");
+    }catch(e){
+        return custom_errors(e)
+    }
 }
 
 Card.prototype.getCardsByType = async function(options){
@@ -90,49 +103,19 @@ Card.prototype.getCardsByType = async function(options){
     }
 }
 
-Card.prototype.updateCardsByType = async function(options){
-        try{
-        let edenCards = [];
-        let holybookCards = [];
-        let registerCards = [];
-        let result = [];
+Card.prototype.exists = async function (table_name, payload){
+    let request = 'SELECT exists(SELECT 1 FROM )'
+}
 
-        const checkOwner = "SELECT * FROM decks WHERE id = $1 AND user_id = $2";
-        //check the owner of the deck
-        let ownerResult = await this.db.query(checkOwner,[options.deck_id, options.user_id]);
-        if(ownerResult.rows.length === 0){
-            throw { code: '02000' }
-        }
-        if(EDEN.includes(options.type)){
-            let counter = 0;
-            let edenCardsBefore = await this.db.query('SELECT cards, qty FROM edens WHERE deck_id = $1', [options.deck_id]);
-            let oppositeTypeObj = serializeByOppositeType(edenCardsBefore.rows[0].cards, options.type);
-            let newObj = Object.assign(oppositeTypeObj, options.payload);
-            Object.keys(newObj).map(elmt => counter += Number(newObj[elmt].qty));
-            edenCards = await this.db.query('UPDATE edens SET cards = $1, qty = $2 WHERE deck_id = $3',[deserialize(newObj) , counter, options.deck_id]);
-        }
-        
-        if(HOLYBOOK.includes(options.type)){
-            let counter = 0;
-            let holybookCardsBefore = await this.db.query('SELECT cards FROM holy_books WHERE deck_id = $1', [options.deck_id]);
-            let oppositeTypeObj = serializeByOppositeType(holybookCardsBefore.rows[0].cards, options.type);
-            let newObj = Object.assign(oppositeTypeObj, options.payload);
-            Object.keys(newObj).map(elmt => counter += Number(newObj[elmt].qty));
-            holybookCards = await this.db.query('UPDATE holy_books SET cards = $1, qty = $2 WHERE deck_id = $3',[deserialize(newObj) ,counter ,options.deck_id]);
-        }
-
-        if(REGISTER.includes(options.type)){
-            let counter = 0;
-            let registerCardsBefore = await this.db.query('SELECT cards FROM registers WHERE deck_id = $1', [options.deck_id]);
-            let oppositeTypeObj = serializeByOppositeType(registerCardsBefore.rows[0].cards, options.type);
-            let newObj = Object.assign(oppositeTypeObj, options.payload);
-            Object.keys(newObj).map(elmt => counter += Number(newObj[elmt].qty));
-            registerCards = await this.db.query('UPDATE registers SET cards = $1, qty = $2 WHERE deck_id = $3',[deserialize(newObj) ,counter ,options.deck_id]);
-        }
-        
-        return return_success("Updated successfully");
-    }catch(e){
-        return custom_errors(e)
+Card.prototype.deleteBy = async function(allowedFields ,payload){
+    try {
+        let request = 'DELETE FROM ';
+        request += this.table_name;
+        console.log(request)
+        return return_success('Hello')          
+    } catch (error) {
+        console.log(error)
+        return custom_errors(error)
     }
 }
 
