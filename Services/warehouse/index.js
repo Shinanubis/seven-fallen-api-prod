@@ -3,14 +3,6 @@ const {LANG, TYPES} = require('../../constantes/typesByCategory');
 const { LANG_MAP } = require('../../constantes/languages');
 const {MAX} = require('../../constantes/pagination');
 
-// Models
-const LangModel = require('../../Models/Language');
-const RaritieModel = require('../../Models/Raritie');
-
-// Models Instances
-const Language = new LangModel();
-const Raritie = new RaritieModel();
-
 // Lib
 const axios = require("axios");
 
@@ -357,10 +349,57 @@ async function getCardsList(){
       }
 }
 
+async function getCardsByType(type){
+      try {
+            let responseCounter = await axios.get(`${process.env.CARD_WAREHOUSE}cards/all/FR?types=[${type}]&page=1&card_count=1`, axiosOptions);
+            let counter = 0;
+
+            //get counter cards
+            if(responseCounter.status === 200 && responseCounter.statusText === 'OK'){
+                  counter = responseCounter.data[0];
+            }else{
+                 throw {
+                       code: responseCards.response.status,
+                       message: responseCards.response.statusText
+                 } 
+            }
+            
+            //redo the same 
+            let responseCards = await axios.get(`${process.env.CARD_WAREHOUSE}cards/all/FR?types=[${type}]&page=1&card_count=${counter}`, axiosOptions);
+            if(responseCards.status === 200 && responseCards.statusText === 'OK'){
+                  let cardsMap = new Map();
+                  responseCards.data[1].map(elmt => cardsMap.set(Number(elmt.id), {image_path: elmt.image_path, max:elmt.nb_max_per_deck}))
+                  let responseThree = await axios.get(`${process.env.CARD_WAREHOUSE}cards/FR/multiple?a=[${Array.from(cardsMap.keys()).join()}]`, axiosOptions);
+                  if(responseThree.status === 200 && responseThree.statusText === 'OK'){
+                        responseThree.data.map(elmt => cardsMap.set(elmt.id, {...cardsMap.get(elmt.id), ec_cost: elmt.heavenly_energy}))
+                        return {
+                              code: 200,
+                              message: cardsMap
+                        }
+                  }else{
+                        throw {
+                              code: responseThree.response.status,
+                              message: responseThree.response.statusText
+                        }
+                  }
+
+            }else{
+                 throw {
+                       code: responseCards.response.status,
+                       message: responseCards.response.statusText
+                 } 
+            }
+
+      } catch (error) {
+            throw error
+      }
+}
+
 module.exports = {
       getTypesList,
       getRaritiesList,
       getKingdomsList,
       getExtensionsList,
-      getCardsList
+      getCardsList,
+      getCardsByType
 };

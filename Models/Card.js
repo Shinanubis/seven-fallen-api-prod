@@ -37,17 +37,10 @@ function Card(){
 }
 
 Card.prototype.check = async function(options){
-    try{
-        let request = "SELECT * FROM decks WHERE id = $1 AND user_id = $2";
-        let result = await this.db.query(request,[options.params.deckId, options.user_id]);
-        if(result.rows.length === 0){
-            throw { code: '02000' }
-        }
-        
-        return true;
-    }catch(error){
-        return false;
-    }
+    let request = "SELECT * FROM decks WHERE id = $1 AND user_id = $2";
+    let result = await this.db.query(request,[options.params.deckId, options.user_id]);
+    return result.rowCount > 0;
+
 }
 
 Card.prototype.createCard = async function(options){
