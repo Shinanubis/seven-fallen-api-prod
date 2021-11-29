@@ -18,6 +18,15 @@ function Deck (){
     this.db = pool;
 }
 
+Deck.prototype.isOwner = async function(options){
+        let request = 'SELECT EXISTS(SELECT 1 FROM decks WHERE user_id = $1 AND id = $2)';
+        let query_params = [options.user_id, options.deck_id];
+        let response = await this.db.query(request, query_params);
+        if(response.rows[0]){
+            return response.rows[0].exists;
+        }
+}
+
 // Display all the shared decks
 Deck.prototype.findAllVisibleDecks = async function(options) {
     try {
@@ -107,17 +116,16 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 //Display all cards owned by a deck and by type
 Deck.prototype.findAllDeckCards = async function(options){
     try{
-        let requestOne ='SELECT card_id, qty FROM edens WHERE deck_id = $1';
-        let requestTwo = 'SELECT card_id, qty FROM holy_books WHERE deck_id = $1';
-        let requestThree = 'SELECT card_id, qty FROM registers WHERE deck_id = $1';
-        let request = [requestOne, requestTwo, requestThree].join(' UNION ALL ');
+        let request ='SELECT card_id, qty FROM cards_list WHERE deck_id = $1';
         let query_params = [];
 
         query_params.push(options.deck_id);
 
         const {rows}= await this.db.query(request, query_params);
+        
         return return_success(rows);
     }catch(e){
+        console.log(e)
         return custom_errors(e);
     }
 }

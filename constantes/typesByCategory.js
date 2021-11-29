@@ -7,6 +7,7 @@ const LANG = ['FR', 'EN'];
 module.exports = {
     EDEN,
     REGISTER,
+    HOLYBOOK,
     TYPES,
     LANG
 }

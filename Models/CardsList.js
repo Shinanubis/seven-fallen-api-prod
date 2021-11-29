@@ -3,13 +3,13 @@ const custom_errors = require('../Errors/CustomsErrors');
 const pool = require('../Services/database/db');
 
 
-function Eden(){
+function CardsList(){
     this.db = pool;
 }
 
-Eden.prototype.exists = async function(options){
+CardsList.prototype.exists = async function(options){
     try {
-        let request = 'SELECT EXISTS FROM (SELECT * FROM edens WHERE deck_id = $1)';
+        let request = 'SELECT EXISTS FROM (SELECT * FROM cards_list WHERE deck_id = $1)';
         let query_params = [options.deck_id];
         let {rows} = await this.db.query(request, query_params);
         return return_success(rows);
@@ -18,20 +18,40 @@ Eden.prototype.exists = async function(options){
     }
 }
 
-Eden.prototype.getEdenTotal = async function(options){
+CardsList.prototype.check = async function(options){
+    let request = "SELECT * FROM decks WHERE id = $1 AND user_id = $2";
+    let result = await this.db.query(request,[options.params.deckId, options.user_id]);
+    return result.rowCount > 0;
+
+}
+
+CardsList.prototype.getCardsSubSetTotal = async function(options){
     try {
-        let request = 'SELECT SUM(qty) AS total FROM edens WHERE deck_id = $1';
+        let request = 'SELECT COALESCE(SUM(qty),0) AS total FROM cards_list WHERE deck_id = $1 AND type_id = ANY($2)';
+        let query_params = [options.deck_id, options.set];
+        let {rows} = await this.db.query(request, query_params);
+        return return_success(rows[0].total);
+    } catch (error) {
+        console.log(error)
+        return custom_errors(error);    
+    }
+}
+
+CardsList.prototype.getCardsListTotal = async function(options){
+    try {
+        let request = 'SELECT SUM(qty) AS total FROM cards_list WHERE deck_id = $1';
         let query_params = [options.deck_id];
         let {rows} = await this.db.query(request, query_params);
         return return_success(rows[0].total);
     } catch (error) {
+        console.log(error)
         return custom_errors(error);    
     }
 } 
 
-Eden.prototype.getEden = async function(options){
+CardsList.prototype.getCardsList = async function(options){
     try {
-        let request = 'SELECT card_id, type_id ,image_path ,max, qty FROM edens WHERE deck_id = $1 ';
+        let request = 'SELECT card_id, type_id ,image_path ,max, qty FROM cards_list WHERE deck_id = $1 ';
         let query_params = [options.deck_id];
 
         if(options.type_id){
@@ -46,9 +66,10 @@ Eden.prototype.getEden = async function(options){
     }
 }
 
-Eden.prototype.addCard = async function (options){
+CardsList.prototype.addCard = async function (options){
     try {
-        let request = 'INSERT INTO edens(deck_id, card_id, type_id, image_path, max, qty, ec_cost) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING';
+        console.log(options)
+        let request = 'INSERT INTO cards_list(deck_id, card_id, type_id, image_path, max, qty, ec_cost) VALUES($1, $2, $3, $4, $5, $6, $7)';
         let query_params = [options.deck_id, options.card_id, options.type_id,options.image_path ,options.max, options.qty, options.ec_cost];
         let result = await this.db.query(request, query_params);
         return result.rowCount === 1 || result.rowCount === 0;
@@ -58,9 +79,9 @@ Eden.prototype.addCard = async function (options){
     }
 }
 
-Eden.prototype.delete = async function(options){
+CardsList.prototype.delete = async function(options){
     try {
-        let request = 'DELETE FROM edens WHERE deck_id = $1 ';
+        let request = 'DELETE FROM cards_list WHERE deck_id = $1 ';
         let query_params = [options.deck_id];
 
         if(options.type_id){
@@ -76,4 +97,4 @@ Eden.prototype.delete = async function(options){
 }
 
 
-module.exports = Eden;
+module.exports = CardsList;

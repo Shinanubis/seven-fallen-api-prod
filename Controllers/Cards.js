@@ -1,8 +1,5 @@
 //Models
-const CardsModel = require('../Models/Card');
-const EdenModel = require('../Models/Eden');
-const HolyBookModel = require('../Models/HolyBook');
-const RegisterModel = require('../Models/Register');
+const CardsListModel = require('../Models/CardsList');
 
 const {makeData} = require('../Utils/makeData');
 const {EDEN, HOLYBOOK, REGISTER} = require('../constantes/typesByCategory');
@@ -15,10 +12,7 @@ dotenv.config();
 const { includes_all, includes_all_src } = require('../Utils/arrays'); 
 
 //Models instance
-const Eden = new EdenModel();
-const Register = new RegisterModel();
-const HolyBook = new HolyBookModel();
-const Card = new CardsModel();
+const CardsList = new CardsListModel();
 
 //services
 const Warehouse = require("../Services/warehouse");
@@ -53,9 +47,10 @@ module.exports = {
 
     async addCard(req, res){
         try {
+            
             const options = makeData(req);
             const {params, body, user_id} = options;
- 
+
             if(params.deckId){
                 options.deckId = Number(makeData(req).params.deckId);
             }
@@ -69,7 +64,7 @@ module.exports = {
             }
 
             //check if owner of the deck
-            let resultOwner = await Card.check(options)
+            let resultOwner = await CardsList.check(options)
 
             if(!resultOwner){
                 throw {
@@ -81,7 +76,7 @@ module.exports = {
             let warehouseResult = await Warehouse.getCardsByType(params.type);
             let arrayIdsFromWarehouse = Array.from(warehouseResult.message.keys());
             let arrayIdsFromUser = Object.keys(body.payload).map(elmt => Number(elmt));
-            
+
             // check if user send the good types
             if(!includes_all_src(arrayIdsFromUser, arrayIdsFromWarehouse)){
                 throw {
@@ -100,62 +95,55 @@ module.exports = {
                 };
             }
 
-            
-            if(EDEN.includes(Number(params.type))){
+            //insert a card in CardsList
+            let result = await CardsList.getCardsList({deck_id: params.deckId, type_id: params.type});
+            let idsFromDb = result.message.map(elmt => elmt.card_id);
+            let idsFromUser = Object.keys(body.payload).map(elmt => Number(elmt));
+            let multipleInsert = [];
 
-                //insert a card in eden
-                let result = await Eden.getEden({deck_id: params.deckId, type_id: params.type});
-                let idsFromDb = result.message.map(elmt => elmt.card_id);
-                let idsFromUser = Object.keys(body.payload).map(elmt => Number(elmt));
-                let multipleInsert = [];
+            //case if the user send an empty list
+            if(Object.keys(body.payload).length === 0 && result.message.length > 0){
+                  let result = await CardsList.delete({deck_id: params.deckId, type_id: params.type});
+                  return res.status(result.code).json(result);
+            }
+            // case if user send the same cards list
+            if(includes_all(idsFromUser,idsFromDb)){
+                return res.status(200).json({
+                    code: 200,
+                    message: "Already up to date"
+                })
+            };
 
-
-                //case if the user send an empty list
-                if(Object.keys(body.payload).length === 0 && result.message.length > 0){
-                      let result = await Eden.delete({deck_id: params.deckId, type_id: params.type});
-                      return res.status(result.code).json(result);
+            //format datas before insert
+            let formatedData = Object.keys(body.payload).map(elmt => {
+                let object = warehouseResult.message.get(Number(elmt));
+                return {
+                    deck_id: Number(params.deckId),
+                    card_id: Number(elmt),
+                    type_id: Number(params.type),
+                    image_path: process.env.CARDS_WAREHOUSE_STATIC + object.image_path,
+                    max: object.max,
+                    ec_cost: object.ec_cost,
+                    qty: 1
                 }
-
-                // case if user send the same cards list
-                if(includes_all(idsFromUser,idsFromDb)){
-                    return res.status(200).json({
-                        code: 200,
-                        message: "Already up to date"
-                    })
-                };
-
-                //format datas before insert
-                let formatedData = Object.keys(body.payload).map(elmt => {
-                    let object = warehouseResult.message.get(Number(elmt));
-                    return {
-                        deck_id: Number(params.deckId),
-                        card_id: Number(elmt),
-                        type_id: Number(params.type),
-                        image_path: object.image_path,
-                        max: object.max,
-                        ec_cost: object.ec_cost,
-                        qty: 1
-                    }
-                });
+            });
                
                 
-                await Eden.delete({deck_id: params.deckId, type_id: params.type});
-                for(card of formatedData){
-                    let result = await Eden.addCard(card);
-                    if(result === true){
-                        multipleInsert.push(result);
-                    }
+            await CardsList.delete({deck_id: params.deckId, type_id: params.type});
+            for(card of formatedData){
+                let result = await CardsList.addCard(card);
+                if(result === true){
+                    multipleInsert.push(result);
                 }
+            }
                 
                 
 
-                if(multipleInsert.every(elmt => elmt === true)){
-                    res.status(200).json({
-                        code:200,
-                        message: "Successfully updated"
-                    })
-                }
-                
+            if(multipleInsert.every(elmt => elmt === true)){
+                res.status(200).json({
+                    code:200,
+                    message: "Successfully updated"
+                })
             }
 
         } catch (error) {

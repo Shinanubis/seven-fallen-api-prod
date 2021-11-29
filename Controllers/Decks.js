@@ -1,14 +1,11 @@
 //Models
 const DecksModel = require('../Models/Deck');
-const EdenModel = require('../Models/Eden');
-const HolyBookModel = require('../Models/HolyBook');
-const RegisterModel = require('../Models/Register');
+const CardsListModel = require('../Models/CardsList');
+
 
 //Models instances
 const Deck = new DecksModel();
-const Eden = new EdenModel();
-const HolyBook = new HolyBookModel();
-const Register = new RegisterModel();
+const CardList = new CardsListModel();
 
 //Utils
 const regex_mod = require('../Utils/regex');
@@ -18,6 +15,8 @@ const checkId = require('../Utils/checkId');
 //Environment varriables
 const dotenv = require('dotenv');
 dotenv.config();
+
+const { EDEN, HOLYBOOK, REGISTER } = require('../constantes/typesByCategory');
 
 //Global variables for regex
 const regex_order = /^[A-Za-z_]+$/;
@@ -100,17 +99,26 @@ module.exports = {
         }
     },
 
-    getDeckCards(req,res){
+    async getDeckCards(req,res){
         try{
             const options = {};
             options.user_id = process.env.NODE_ENV === 'dev' ? req.body.user_id : req.session.passport.user;
+
             if(req.params.id){
                 options.deck_id = req.params.id
             }
-            
-            Deck.findAllDeckCards(options)
-                .then(response => res.status(response.code).json(response))
-                .catch(err => res.status(err.code).json(err));
+
+            let isOwner = await Deck.isOwner(options);
+
+            if(isOwner){
+                let responseDeck = await Deck.findAllDeckCards(options);
+                return res.status(200).json(responseDeck);
+            }
+            res.status(404).json({
+                code:404,
+                message: "Not Found"
+            })
+
         }catch(e){
             res.status(e.code).json(e);
         }
@@ -118,6 +126,7 @@ module.exports = {
 
     async getById(req, res) {
         try {
+
             const options = {};
             options.user_id = process.env.NODE_ENV === 'dev' ?  req.body.user_id : req.session.passport.user;
             if(req.params.id && checkId(req.params.id) && checkFormInputs(req.params.id, regex_id)) {
@@ -125,20 +134,27 @@ module.exports = {
             }
 
             let responseDeckModel = await Deck.findOneUserDeck(options);
-            let responseEdenModel = await Eden.getEdenTotal(options);
-            let responseHolyBookModel = await HolyBook.getHolyBookTotal(options);
-            let responseRegisterModel = await Register.getRegisterTotal(options);
+            let responseEdenQty = await CardList.getCardsSubSetTotal({...options, set: EDEN});
+            let responseHolyBookQty = await CardList.getCardsSubSetTotal({...options, set: HOLYBOOK});
+            let responseRegisterQty = await CardList.getCardsSubSetTotal({...options, set: REGISTER});
+            
+             if(
+                    responseEdenQty.code === 200 &&
+                    responseHolyBookQty.code === 200 &&
+                    responseRegisterQty.code === 200 &&
+                    responseDeckModel.code === 200
+                ){
 
-            if(responseHolyBookModel.code === 200 && responseDeckModel.code === 200){
-                let newObj = {
+                    let newObj = {
                     code: 200,
                     message: {
                         ...responseDeckModel.message,
-                        edenQty: responseEdenModel.message ? Number(responseEdenModel.message) : 0,
-                        holyBookQty: responseHolyBookModel.message ? Number(responseHolyBookModel.message) : 0,
-                        registerQty: responseRegisterModel.message ? Number(responseRegisterModel.message) : 0
+                        edenQty: responseEdenQty.message ? Number(responseEdenQty.message) : 0,
+                        holyBookQty: responseHolyBookQty.message ? Number(responseHolyBookQty.message) : 0,
+                        registerQty: responseRegisterQty.message ? Number(responseRegisterQty.message) : 0
                     }
                 }
+
                 return res.status(newObj.code).json(newObj) 
             }
         } catch (e) {
