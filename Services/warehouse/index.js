@@ -10,6 +10,10 @@ const axios = require("axios");
 const dotenv = require('dotenv');
 dotenv.config();
 
+//Utils
+const return_success = require('../../Utils/returnSuccess');
+const custom_errors = require('../../Errors/CustomsErrors');
+
 const axiosOptions = {
       headers: {
             'Authorization': process.env.CARD_WAREHOUSE_TOKEN
@@ -155,157 +159,29 @@ async function getCardsListPerId(page, size, lang, types){
 }
 
 
-async function getTypesList(){
+async function getList(type, name){
       try {
-            let datas = [];
-            let newArr = [];
-            let responseDbLanguage = await Language.getAll();  
-
-            if(responseDbLanguage.code === 200){
-                  for(let lang of responseDbLanguage.message){
-                        let {status, statusText, data} = await axios.get(process.env.CARD_WAREHOUSE + 'types/all/' + lang.lang_name, axiosOptions);
-
-                        if(status >= 200 && status < 400 && statusText === 'OK'){
-                              for(let elmt of data){
-                                    elmt.lang_id = lang.id
-                              }
-                        }else{
-                              throw new Error({
-                                    response: {
-                                          status,
-                                          statusText
-                                    }
-                              })
-                        }
-                        datas =  [...datas, ...data];
-                  }
-                  return {
-                        code: 200,
-                        message: datas
-                  }; 
-                  } 
-             
-      } catch (error) {
-            const {status, statusText} = error.response;
-            return {
-                  code: status,
-                  message: statusText
+            let url = `${process.env.CARD_WAREHOUSE}${type}/all/FR`;
+            if(name){
+                  url += `?name=${name}`;
+            };
+            console.log(url)
+            let response = await axios.get(url, axiosOptions);
+            
+            if(response.status === 200 && response.statusText === 'OK'){
+                  return return_success(response.data);
             }
+
+      } catch (error) {
+            if(error.response){
+                  console.log("[Warehouse Service][getKingdomsList]" , error.response)
+                  throw custom_errors(error.response.status);
+            }
+            console.log("[Warehouse Service][getKingdomsList]" , error)
+            throw custom_errors(error);
       }
 }
 
-async function getRaritiesList(){
-      try {
-            let datas = [];
-            let newArr = [];
-            let responseDbLanguage = await Language.getAll();  
-
-            if(responseDbLanguage.code === 200){
-                  for(let lang of responseDbLanguage.message){
-                        let {status, statusText, data} = await axios.get(process.env.CARD_WAREHOUSE + 'rarities/all/' + lang.lang_name, axiosOptions);
-
-                        if(status >= 200 && status < 400 && statusText === 'OK'){
-                              for(let elmt of data){
-                                    elmt.lang_id = lang.id
-                              }
-                        }else{
-                              throw new Error({
-                                    response: {
-                                          status,
-                                          statusText
-                                    }
-                              })
-                        }
-                        datas =  [...datas, ...data];
-                  }
-                  return {
-                        code: 200,
-                        message: datas
-                  }; 
-                  } 
-             
-      } catch (error) {
-            const {status, statusText} = error.response;
-            return {
-                  code: status,
-                  message: statusText
-            }
-      }
-}
-
-async function getKingdomsList(){
-      try {
-            let datas = [];
-            let newArr = [];
-            let responseDbLanguage = await Language.getAll();  
-
-            if(responseDbLanguage.code === 200){
-                  for(let lang of responseDbLanguage.message){
-                  let {status, statusText, data} = await axios.get(process.env.CARD_WAREHOUSE + 'kingdoms/all/' + lang.lang_name, axiosOptions);
-                        if(status >= 200 && status < 400 && statusText === 'OK'){
-                              for(let elmt of data){
-                                    elmt.lang_id = lang.id
-                              }
-                        }else{
-                              throw new Error({
-                                    response: {
-                                          status,
-                                          statusText
-                                    }
-                              })
-                        }
-                        datas =  [...datas, ...data];
-                  }
-            }
-            return {
-                  code: 200,
-                  message: datas
-            };   
-      } catch (error) {
-            const {status, statusText} = error.response;
-            return {
-                  code: status,
-                  message: statusText
-            }
-      }
-}
-
-async function getExtensionsList(){
-      try {
-            let datas = [];
-            let newArr = [];
-            let responseDbLanguage = await Language.getAll();
-
-            if(responseDbLanguage.code === 200){
-                  for(let lang of responseDbLanguage.message){
-                  let {status, statusText, data} = await axios.get(process.env.CARD_WAREHOUSE + 'extensions/all/' + lang.lang_name, axiosOptions);
-                  if(status >= 200 && status < 400 && statusText === 'OK'){
-                        for(let elmt of data){
-                              elmt.lang_id = lang.id
-                        }
-                  }else{
-                        throw new Error({
-                              response: {
-                                    status,
-                                    statusText
-                              }
-                        })
-                  }
-                  datas =  [...datas, ...data];
-                  }
-            }
-            return {
-                  code: 200,
-                  message: datas
-            };   
-      } catch (error) {
-            const {status, statusText} = error.response;
-            return {
-                  code: status,
-                  message: statusText
-            }
-      }
-}
 
 async function getCardsList(){
       try {
@@ -395,11 +271,66 @@ async function getCardsByType(type){
       }
 }
 
+async function getCardsBy(options){
+      try {
+            let url = new URL(`${process.env.CARD_WAREHOUSE}cards/all/FR`);
+
+            if(options.page){
+                  url.searchParams.append('page', options.page);
+            }
+
+            if(options.card_count){
+                  url.searchParams.append('card_count', options.card_count);
+            }
+
+            if(options.types){
+                  url.searchParams.append('types', `[${options.types}]`);
+            }
+
+            if(options.kingdoms){
+                  url.searchParams.append('kingdoms', `[${options.kingdoms}]`);
+            }
+
+            if(options.rarities){
+                  url.searchParams.append('rarities', `[${options.rarities}]`);
+            }
+
+            if(options.classes){
+                  url.searchParams.append('classes', `[${options.classes}]`);
+            }
+
+            if(options.extensions){
+                  url.searchParams.append('extensions', `[${options.extensions}]`)
+            }
+
+            if(options.capacities){
+                  url.searchParams.append('capacities', `[${options.capacities}]`);
+            }
+
+            if(options.name){
+                  url.searchParams.append('name', options.name)
+            }
+
+            let responseCards = await axios.get(`${url.toString()}`, axiosOptions);
+
+            if(responseCards.status === 200 && responseCards.statusText === 'OK'){
+                  return return_success(responseCards.data);
+            }
+            
+            throw {
+                  code: responseCards.repsonse.status,
+                  message: responseCards.repsonse.statusText
+            };
+
+      } catch (error) {
+            console.log("[Warehouse Service][getCardsBy] : ", error)
+            throw error;
+      }
+}
+
 module.exports = {
-      getTypesList,
-      getRaritiesList,
-      getKingdomsList,
-      getExtensionsList,
+      getCardsBy,
+      getList,
       getCardsList,
       getCardsByType
 };

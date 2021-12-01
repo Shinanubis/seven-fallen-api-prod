@@ -25,6 +25,7 @@ const routeProfile = require('./Routes/Profile');
 const routeDecks = require("./Routes/Decks");
 const routeExport = require("./Routes/Export");
 const routeImport = require("./Routes/Import");
+const routeWarehouse = require('./Routes/Warehouse');
 
 //Port setting
 const PORT = process.env.NODE_PORT || 3000;
@@ -60,6 +61,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //Routes middleware
+app.use('/api', routeWarehouse);
 app.use('/api',routeUser);
 app.use('/api',routeAuth);
 app.use('/api',routeProfile);
