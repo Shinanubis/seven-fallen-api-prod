@@ -19,12 +19,15 @@ function Deck (){
 }
 
 Deck.prototype.isOwner = async function(options){
+    try {
         let request = 'SELECT EXISTS(SELECT 1 FROM decks WHERE user_id = $1 AND id = $2)';
         let query_params = [options.user_id, options.deck_id];
         let response = await this.db.query(request, query_params);
-        if(response.rows[0]){
-            return response.rows[0].exists;
-        }
+
+        return response.rows[0].exists;
+    } catch (error) {
+        throw custom_errors(error.code);
+    }
 }
 
 // Display all the shared decks
@@ -116,7 +119,7 @@ Deck.prototype.findAllVisibleDecks = async function(options) {
 //Display all cards owned by a deck and by type
 Deck.prototype.findAllDeckCards = async function(options){
     try{
-        let request ='SELECT card_id, qty FROM cards_list WHERE deck_id = $1';
+        let request ='SELECT card_id, type_id, image_path, qty, max, ec_cost FROM cards_list WHERE deck_id = $1';
         let query_params = [];
 
         query_params.push(options.deck_id);
@@ -125,8 +128,7 @@ Deck.prototype.findAllDeckCards = async function(options){
         
         return return_success(rows);
     }catch(e){
-        console.log(e)
-        return custom_errors(e);
+        throw custom_errors(e);
     }
 }
 

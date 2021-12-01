@@ -4,6 +4,8 @@ const CardsController = require('../Controllers/Cards');
 const multer = require("multer")();
 
 router.get('/cards/:type', CardsController.findCardsByType);
-router.patch('/cards/:type', multer.fields([]),CardsController.addCard);
+router.post('/cards/:type', multer.fields([]),CardsController.addCard);
+router.patch('/cards/:type', multer.fields([]),CardsController.updateCard);
+router.delete('/cards/:type', multer.fields([]), CardsController.deleteCard);
 
 module.exports = router;

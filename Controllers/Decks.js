@@ -112,15 +112,30 @@ module.exports = {
 
             if(isOwner){
                 let responseDeck = await Deck.findAllDeckCards(options);
-                return res.status(200).json(responseDeck);
+                let newObj = {};
+                responseDeck.message.map(elmt => newObj[elmt.type_id] = {
+                    ...newObj[elmt.type_id],
+                    [elmt.card_id]:{
+                        image_path: elmt.image_path,
+                        qty: elmt.qty,
+                        max: elmt.max,
+                        ec_cost: elmt.ec_cost
+                    }
+                })
+
+                return res.status(200).json({
+                    code: 200,
+                    message: {...newObj}
+                });
             }
-            res.status(404).json({
+            return res.status(404).json({
                 code:404,
                 message: "Not Found"
             })
 
         }catch(e){
-            res.status(e.code).json(e);
+            console.log("Error getDeckcards : ", e)
+            return res.status(e.code).json(e);
         }
     },
 
@@ -133,33 +148,42 @@ module.exports = {
                 options.deck_id = req.params.id;
             }
 
-            let responseDeckModel = await Deck.findOneUserDeck(options);
-            let responseEdenQty = await CardList.getCardsSubSetTotal({...options, set: EDEN});
-            let responseHolyBookQty = await CardList.getCardsSubSetTotal({...options, set: HOLYBOOK});
-            let responseRegisterQty = await CardList.getCardsSubSetTotal({...options, set: REGISTER});
+            let isOwner = await Deck.isOwner(options);
             
-             if(
-                    responseEdenQty.code === 200 &&
-                    responseHolyBookQty.code === 200 &&
-                    responseRegisterQty.code === 200 &&
-                    responseDeckModel.code === 200
-                ){
+            if(isOwner){
+                let responseDeckModel = await Deck.findOneUserDeck(options);
+                let responseEdenQty = await CardList.getCardsSubSetTotal({...options, set: EDEN});
+                let responseHolyBookQty = await CardList.getCardsSubSetTotal({...options, set: HOLYBOOK});
+                let responseRegisterQty = await CardList.getCardsSubSetTotal({...options, set: REGISTER});
 
-                    let newObj = {
-                    code: 200,
-                    message: {
-                        ...responseDeckModel.message,
-                        edenQty: responseEdenQty.message ? Number(responseEdenQty.message) : 0,
-                        holyBookQty: responseHolyBookQty.message ? Number(responseHolyBookQty.message) : 0,
-                        registerQty: responseRegisterQty.message ? Number(responseRegisterQty.message) : 0
+                 if(
+                        responseEdenQty.code === 200 &&
+                        responseHolyBookQty.code === 200 &&
+                        responseRegisterQty.code === 200 &&
+                        responseDeckModel.code === 200
+                    ){
+
+                        let newObj = {
+                        code: 200,
+                        message: {
+                            ...responseDeckModel.message,
+                            edenQty: responseEdenQty.message ? Number(responseEdenQty.message) : 0,
+                            holyBookQty: responseHolyBookQty.message ? Number(responseHolyBookQty.message) : 0,
+                            registerQty: responseRegisterQty.message ? Number(responseRegisterQty.message) : 0
+                        }
                     }
-                }
 
-                return res.status(newObj.code).json(newObj) 
+                    return res.status(newObj.code).json(newObj); 
+                }
             }
+
+            throw {
+                code: 404,
+                message: "Mot Found"
+            }
+
         } catch (e) {
-            console.log(e)
-            res.status(e.code).json(e);
+            return res.status(e.code).json(e);
         }
     },
 

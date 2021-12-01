@@ -1,8 +1,9 @@
 //Models
 const CardsListModel = require('../Models/CardsList');
+const DeckModel = require('../Models/Deck');
 
 const {makeData} = require('../Utils/makeData');
-const {EDEN, HOLYBOOK, REGISTER} = require('../constantes/typesByCategory');
+const {EDEN, HOLYBOOK, REGISTER, TYPES} = require('../constantes/typesByCategory');
 
 //environment variables
 const dotenv = require('dotenv');
@@ -13,12 +14,13 @@ const { includes_all, includes_all_src } = require('../Utils/arrays');
 
 //Models instance
 const CardsList = new CardsListModel();
+const Deck = new DeckModel();
 
 //services
 const Warehouse = require("../Services/warehouse");
 
 function checkDivinity(obj){
-    return Object.keys(obj).filter(elmt => Number(obj[elmt].type) === 1).length > 1;
+    return Object.keys(obj).length > 1;
 }
 
 module.exports = {
@@ -27,21 +29,39 @@ module.exports = {
         try{
             const options = {};
             options.user_id = process.env.NODE_ENV === 'dev' ?  req.body.user_id : req.session.passport.user;
-
+            
             if(req.params.deckId){
                 options.deck_id = Number(req.params.deckId);
             }
 
             if(req.params.type){
-                options.type = Number(req.params.type);
+                options.type_id = Number(req.params.type);
+            }
+            
+            let isOwner = await Deck.isOwner(options);
+        
+            if(isOwner){
+                    
+                    let response = await CardsList.getCardsByType(options);
+                    let newObj = {};
+                    response.message.map(elmt => newObj[elmt.card_id] = {
+                        type_id: elmt.type_id, 
+                        image_path: elmt.image_path, 
+                        max: elmt.max, 
+                        qty: elmt.qty, 
+                        ec_cost: elmt.ec_cost
+                    });
+                    return res.status(200).json(newObj);
             }
 
-            Card.getCardsByType(options)
-                .then(response => res.status(response.code).json(response.message))
-                .catch(err => res.status(err.code).json(err))
+            throw {
+                code: 404,
+                message: "Not Found"
+            }
 
         }catch(e){
-            res.status(e.code).json(e);
+            console.log("Error findCardsByType", e)
+            return res.status(e.code).json(e);
         }
     },
 
@@ -73,18 +93,7 @@ module.exports = {
                 }
             }
 
-            let warehouseResult = await Warehouse.getCardsByType(params.type);
-            let arrayIdsFromWarehouse = Array.from(warehouseResult.message.keys());
-            let arrayIdsFromUser = Object.keys(body.payload).map(elmt => Number(elmt));
-
-            // check if user send the good types
-            if(!includes_all_src(arrayIdsFromUser, arrayIdsFromWarehouse)){
-                throw {
-                    code: 400,
-                    message: "This card doesn't belong to this type"
-                }
-            }
-
+            
             //check number of divinity
             if(Number(params.type) === 1){
                 if(checkDivinity(body.payload)){
@@ -93,6 +102,19 @@ module.exports = {
                         message: "Should have 1 divinity max"
                     }
                 };
+            }
+
+            let warehouseResult = await Warehouse.getCardsByType(params.type);
+            let arrayIdsFromWarehouse = Array.from(warehouseResult.message.keys());
+            let arrayIdsFromUser = Object.keys(body.payload).map(elmt => Number(elmt));
+
+            
+            // check if user send the good types
+            if(!includes_all_src(arrayIdsFromUser, arrayIdsFromWarehouse)){
+                throw {
+                    code: 400,
+                    message: "This card doesn't belong to this type"
+                }
             }
 
             //insert a card in CardsList
@@ -147,8 +169,76 @@ module.exports = {
             }
 
         } catch (error) {
-            console.log(error)
+            console.log("[Controller Cards][addCard]", error)
             return res.status(error.code).json(error);
+        }
+    },
+
+    async updateCard(req,res){
+        try {
+            const options = {};
+            options.user_id = process.env.NODE_ENV === 'dev' ?  req.body.user_id : req.session.passport.user;
+
+            if(req.params.deckId){
+                options.deck_id = req.params.deckId;
+            }
+
+            if(req.body.payload){
+                let payload = JSON.parse(req.body.payload);
+                options.card_id = payload.card_id;
+                options.qty = payload.qty;
+            }
+
+            if(req.params.type){
+                if(!TYPES.includes(Number(req.params.type))){
+                    throw {
+                        code: 404,
+                        message: "Not Found"
+                    }
+                }
+
+                let response = await Warehouse.getCardsByType(req.params.type);
+                
+                if(response.message.get(options.card_id)){
+                    if(response.message.get(options.card_id).max < options.qty){
+                        return res.status(400).json({
+                            code:400,
+                            message: "Bad Request"
+                        })
+                    }
+                }else{
+                    throw {
+                        code: 404,
+                        message: "Not Found"
+                    }
+                }
+
+            }else{
+                throw {
+                        code: 400,
+                        message: "Bad request"
+                    }
+            }
+            
+            let response = await CardsList.updateCard(options);
+            return res.status(200).json({
+                code: 200,
+                data: response.message[0],
+                message: "updated successfully"
+            });
+
+        } catch (error) {
+            console.log("[Controller Cards][updateCard] : ", error)
+            return res.status(error.code).json(error);
+        }
+    },
+
+    async deleteCard(req, res){
+        try{
+            console.log(req.params)
+            return;
+        }catch(error){
+            return;
         }
     },
 
