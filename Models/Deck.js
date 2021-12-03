@@ -185,7 +185,8 @@ Deck.prototype.findOneUserDeck = async function (options) {
         }
         return return_success(rows[0]);
     } catch (e) {
-        return custom_errors(e);
+        console.log("[Models Deck][findOneUserDeck]")
+        throw custom_errors(e);
     }
 }
 
@@ -247,38 +248,34 @@ Deck.prototype.createOne = async function (options) {
 //Update a user's deck infos
 Deck.prototype.updateOne = async function (options) {
     try {
+        console.log(options)
         let request_part_one = 'UPDATE decks SET ';
-        let request_part_two = 'WHERE user_id = $1 AND id = $2';
-        let request_part_three = 'RETURNING *';
+        let request_part_two = [];
+        let request_part_three = ' WHERE user_id = $1 AND id = $2 RETURNING *';
         let counter = 2;
 
         let query_params = [options.user_id, options.deck_id];
         
         if(options.deck_name){
             counter += 1;
-            request_part_one += 'deck_name = $' + counter + ', ';
+            request_part_two.push(`deck_name = $${counter}`);
             query_params.push(options.deck_name);
-        }
-
-        if(options.description){
-            counter += 1;
-            request_part_one += 'description  = $' + counter + ', ';
-            query_params.push(options.description);
         }
 
         if(options.is_visible){
             counter += 1;
-            request_part_one += 'is_visible = $' + counter + ', ';
+            request_part_two.push(`is_visible = $${counter}`);
             query_params.push(options.is_visible);
         }
 
-        if(arrays_utils.includes_all(allowed_kingdoms_ids, options.kingdoms.split(','))){
+        if(options.kingdoms){
             counter += 1; 
-            request_part_one += 'kingdom = $' + counter + ' ';
+            request_part_two.push(`kingdom = $${counter}`);
             query_params.push(options.kingdoms);
         }
 
         let request = request_part_one + request_part_two + request_part_three;
+        console.log(request_part_two)
         const { rows } = await this.db.query(request, query_params);
         if(rows.length === 0){
             throw {
@@ -287,8 +284,9 @@ Deck.prototype.updateOne = async function (options) {
         }
         return return_success(rows);
     } catch (e) {
+        console.log("[Models Deck][updateOne] : ", e)
         e.field = options.deck_name;
-        return custom_errors(e);
+        throw custom_errors(e);
     }
 }
 

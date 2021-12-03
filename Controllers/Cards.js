@@ -10,7 +10,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 //Utils
-const { includes_all, includes_all_src } = require('../Utils/arrays'); 
+const { includes_all, includes_all_src, differences } = require('../Utils/arrays'); 
 
 //Models instance
 const CardsList = new CardsListModel();
@@ -129,6 +129,17 @@ module.exports = {
                   let result = await CardsList.delete({deck_id: params.deckId, type_id: params.type});
                   return res.status(result.code).json(result);
             }
+
+            if(includes_all_src(idsFromUser,idsFromDb) && idsFromUser.length < idsFromDb.length){
+                let diff = differences(idsFromUser, idsFromDb);
+                let result = await CardsList.deleteMany({deck_id: Number(options.params.deckId), card_id: diff});
+                return res.status(200).json({
+                    code: 200,
+                    datas: result.message,
+                    message: "Deleted successfully"
+                })
+            }
+
             // case if user send the same cards list
             if(includes_all(idsFromUser,idsFromDb)){
                 return res.status(200).json({

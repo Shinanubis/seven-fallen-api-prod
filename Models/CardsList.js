@@ -80,7 +80,6 @@ CardsList.prototype.getCardsList = async function(options){
 
 CardsList.prototype.addCard = async function (options){
     try {
-        console.log(options)
         let request = 'INSERT INTO cards_list(deck_id, card_id, type_id, image_path, max, qty, ec_cost) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING';
         let query_params = [options.deck_id, options.card_id, options.type_id,options.image_path ,options.max, options.qty, options.ec_cost];
         let result = await this.db.query(request, query_params);
@@ -94,7 +93,6 @@ CardsList.prototype.addCard = async function (options){
 
 CardsList.prototype.updateCard = async function (options){
     try {
-        console.log(options)
         let request = "UPDATE cards_list SET qty = $1 WHERE deck_id = $2 AND card_id = $3 RETURNING *";
         let query_params = [options.qty, options.deck_id, options.card_id];
         let result = await this.db.query(request, query_params);
@@ -135,10 +133,22 @@ CardsList.prototype.delete = async function(options){
         let result = await this.db.query(request, query_params);
         return return_success("Deleted successfully");
     } catch (error) {
-        console.log(error)
+        console.log('[Models CardsList][delete]', error)
         throw custom_errors(error);
     }
 }
 
+CardsList.prototype.deleteMany = async function(options){
+    try {
+        console.log(options)
+        let request = `DELETE FROM cards_list WHERE deck_id = $1 AND card_id IN (${options.card_id.join()}) RETURNING *`;
+        let query_params = [options.deck_id];
+        let result = await this.db.query(request, query_params);
+        return return_success(result.rows);
+    } catch (error) {
+        console.log('[Models CardsList][deleteMany]', error)
+        throw custom_errors(error);
+    }
+}
 
 module.exports = CardsList;

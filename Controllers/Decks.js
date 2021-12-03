@@ -95,7 +95,8 @@ module.exports = {
                 .then(response => res.status(response.code).json(response))
                 .catch(err => res.status(err.code).json(err));
         } catch (e) {
-            res.status(e.code).json(e);
+            console.log("[Decks Conroller][getAllByUserId]");
+            return res.status(e.code).json(e);
         }
     },
 
@@ -183,6 +184,7 @@ module.exports = {
             }
 
         } catch (e) {
+            console.log("[Controllers Decks][getById]")
             return res.status(e.code).json(e);
         }
     },
@@ -206,7 +208,8 @@ module.exports = {
             res.status(e.code).json(e);
         }
     },
-    updateById(req, res) {
+
+    async updateById(req, res) {
         try {
 
             const options = {};
@@ -231,11 +234,16 @@ module.exports = {
             if(req.body.description && checkFormInputs(req.body.description, regex_mod.regex_description)){
                 options.description = req.body.description;
             }
-            Deck.updateOne(options)
-                .then(response => res.status(response.code).json(response))
-                .catch(err => res.status(err.code).json(err));
+
+            let result = await Deck.updateOne(options)
+            console.log(result)
+            return res.status(200).json({
+                code: 200,
+                message: result
+            });
         } catch (e) {
-            res.status(e.code).json(e);
+            console.log("[Decks Controller][updateById] : ", e)
+            return res.status(e.code).json(e);
         }
     },
     deleteById(req, res) {
