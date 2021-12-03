@@ -43,6 +43,7 @@ module.exports = {
             if(isOwner){
                     
                     let response = await CardsList.getCardsByType(options);
+
                     let newObj = {};
                     response.message.map(elmt => newObj[elmt.card_id] = {
                         type_id: elmt.type_id, 
@@ -149,9 +150,8 @@ module.exports = {
                     qty: 1
                 }
             });
-               
                 
-            await CardsList.delete({deck_id: params.deckId, type_id: params.type});
+            
             for(card of formatedData){
                 let result = await CardsList.addCard(card);
                 if(result === true){
@@ -159,13 +159,11 @@ module.exports = {
                 }
             }
                 
-                
-
             if(multipleInsert.every(elmt => elmt === true)){
-                res.status(200).json({
+                return res.status(200).json({
                     code:200,
                     message: "Successfully updated"
-                })
+                });
             }
 
         } catch (error) {
@@ -221,6 +219,7 @@ module.exports = {
             }
             
             let response = await CardsList.updateCard(options);
+
             return res.status(200).json({
                 code: 200,
                 data: response.message[0],

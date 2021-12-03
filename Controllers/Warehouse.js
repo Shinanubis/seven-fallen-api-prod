@@ -27,7 +27,9 @@ async function findList(req,res){
                   code: 400,
                   message: 'Bad Request'
             }
+
       } catch (error) {
+            
             if(error.response){
                   console.log("[Warehouse Controller][findList] : ", error.response);
                   return res.status(error.response.status).json({
@@ -35,7 +37,7 @@ async function findList(req,res){
                         message: error.response.data
                   })
             }
-            console.log(error)
+
             return res.status(error.code).json({
                code: error.code,
                message: error.message

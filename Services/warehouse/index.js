@@ -165,9 +165,8 @@ async function getList(type, name){
             if(name){
                   url += `?name=${name}`;
             };
-            console.log(url)
+
             let response = await axios.get(url, axiosOptions);
-            
             if(response.status === 200 && response.statusText === 'OK'){
                   return return_success(response.data);
             }
