@@ -8,15 +8,23 @@ function isAuthenticatedMiddleware (req, res, next){
 }
 
 function isAuthenticatedResponse (req, res){
-    const authenticated = req.isAuthenticated();
-    if(authenticated && authenticated === true){
-        res.json({
-            id: req.session.passport.user,
-            isAuthenticated: authenticated,
-        })
-    }else{
-        res.status(401).json({
-            isAuthenticated: authenticated,
+    try{
+        const authenticated = req.isAuthenticated();
+        if(authenticated === true){
+            return res.status(200).json({
+                id: req.session.passport.user,
+                isAuthenticated: authenticated,
+            })
+        }
+
+        throw {
+            code: 401,
+            isAuthenticated: false
+        }
+        
+    }catch(error){
+        return res.status(error.code).json({
+            isAuthenticated: false
         })
     }
 }

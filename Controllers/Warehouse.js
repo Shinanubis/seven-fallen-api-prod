@@ -1,11 +1,49 @@
-const {getCardsBy, getList} = require('../Services/warehouse');
+const {getCardsBy, getList, getMultiple} = require('../Services/warehouse');
 const {TYPES, TYPE_LIST, TYPE_LIST_NAME_REQUIRE} = require('../constantes/typesByCategory');
+
+async function findMultiple(req, res){
+      try {
+            let ids = req.query.ids;
+
+            if(req.query.ids){
+                  ids = ids.slice(1);
+                  ids = ids.slice(0,-1);
+            }else{
+                  throw {
+                        code: 400,
+                        message: "Bad request"
+                  }
+            }
+
+            let response = await getMultiple(ids);
+            if(response.status === 200 && response.statusText === 'OK'){
+                  return res.status(200).json(response.data);
+            }
+            
+            throw {
+                  code: response.status,
+                  message: response.data
+            }
+      } catch (error) {
+            if(error.response){
+                  console.log("[Warehouse Controller][findList] : ", error.response);
+                  return res.status(error.response.status).json({
+                        code: error.response.status,
+                        message: error.response.data
+                  })
+            }
+            return res.status(error.code).json({
+               code: error.code,
+               message: error.message
+            });    
+      }
+}
 
 async function findList(req,res){
 
       try {
             const options = {};
-            options.user_id = process.env.NODE_ENV === 'dev' ?  req.body.user_id : req.session.passport.user;
+            options.user_id = !req.session.passport ?  req.body.user_id : req.session.passport.user;
             let response = '';
 
             if(TYPE_LIST.includes(req.params.type_list)){
@@ -37,7 +75,7 @@ async function findList(req,res){
                         message: error.response.data
                   })
             }
-
+            console.log("[Warehouse Controller][findList] : ",error)
             return res.status(error.code).json({
                code: error.code,
                message: error.message
@@ -130,5 +168,6 @@ async function findCardsBy(req, res){
 
 module.exports = {
       findList,
-      findCardsBy
+      findCardsBy,
+      findMultiple
 }

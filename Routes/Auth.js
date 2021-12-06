@@ -40,12 +40,15 @@ router.get('/auth/google/callback', passport.authenticate('google',{
 }));
 
 router.get('/auth/logout', (req,res) => {
-  req.logout();
-  req.session.destroy((err) => {
-    res.clearCookie('seven')
-    res.redirect('/login');
-  });
-
+  try {
+      req.logout();
+      req.session.destroy((err) => {
+        res.clearCookie('seven');
+        res.status(301).redirect('/login');
+      });
+  } catch (error) {
+    console.log("error")
+  }
 })
 
 module.exports = router;

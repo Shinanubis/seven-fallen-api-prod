@@ -125,7 +125,6 @@ Deck.prototype.findAllDeckCards = async function(options){
         query_params.push(options.deck_id);
 
         const {rows}= await this.db.query(request, query_params);
-        
         return return_success(rows);
     }catch(e){
         throw custom_errors(e);
@@ -135,7 +134,8 @@ Deck.prototype.findAllDeckCards = async function(options){
 // Display all user decks
 Deck.prototype.findAllUserDecks = async function (options) {
     try {
-        let request = `SELECT id, deck_name, kingdom, num_cards, created_at  FROM decks WHERE user_id = $1`;
+        let request = `SELECT id, deck_name, kingdom, num_cards, divinity, created_at FROM decks WHERE user_id = $1`;
+
         let query_params = [options.user_id];
         if(options.order_by && allowed_order.includes(options.order_by)){
             request += ' ORDER BY ' + options.order_by;
@@ -237,7 +237,6 @@ Deck.prototype.createOne = async function (options) {
     try {
         let request = 'INSERT INTO decks(user_id, deck_name, kingdom) VALUES($1, $2, $3) RETURNING id,deck_name'
         let { rows } = await this.db.query(request, [options.user_id, options.deck_name, options.kingdom]);
-        console.log(rows)
         return return_success(rows);
     } catch (e) {
         e.field = options.deck_name;
@@ -245,10 +244,21 @@ Deck.prototype.createOne = async function (options) {
     }
 }
 
+Deck.prototype.addDivinity = async function(options){
+    try {
+        let request = 'UPDATE decks SET divinity = $2 WHERE id = $1 RETURNING *';
+        let { rows } = await this.db.query(request, [options.deck_id, options.card_id]);
+
+        return return_success(rows);
+    } catch (error) {
+        console.log(error)
+        return custom_errors(error);
+    }
+}
+
 //Update a user's deck infos
 Deck.prototype.updateOne = async function (options) {
     try {
-        console.log(options)
         let request_part_one = 'UPDATE decks SET ';
         let request_part_two = [];
         let request_part_three = ' WHERE user_id = $1 AND id = $2 RETURNING *';
@@ -275,7 +285,6 @@ Deck.prototype.updateOne = async function (options) {
         }
 
         let request = request_part_one + request_part_two + request_part_three;
-        console.log(request_part_two)
         const { rows } = await this.db.query(request, query_params);
         if(rows.length === 0){
             throw {

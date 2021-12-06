@@ -61,7 +61,7 @@ module.exports = {
             }
 
         }catch(e){
-            console.log("Error findCardsByType", e)
+            console.log("[Error CardsController][findCardsByType] : ", e)
             return res.status(e.code).json(e);
         }
     },
@@ -94,7 +94,6 @@ module.exports = {
                 }
             }
 
-            
             //check number of divinity
             if(Number(params.type) === 1){
                 if(checkDivinity(body.payload)){
@@ -164,6 +163,9 @@ module.exports = {
                 
             
             for(card of formatedData){
+                if(card.type_id === 1){
+                    await Deck.addDivinity({deck_id: card.deck_id, card_id: card.card_id});
+                }
                 let result = await CardsList.addCard(card);
                 if(result === true){
                     multipleInsert.push(result);

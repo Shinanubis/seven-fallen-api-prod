@@ -20,6 +20,22 @@ const axiosOptions = {
       }
 };
 
+async function getMultiple(ids){
+      try {
+           let url = `${process.env.CARD_WAREHOUSE}cards/FR/multiple?a=[${ids}]`;
+
+           let response = await axios.get(url, axiosOptions);
+
+           if(response.status === 200 && response.statusText === 'OK'){
+                 return response;
+           }
+
+           
+      } catch (error) {
+            throw error.response.data;
+      }
+}
+
 async function CardsDatasToMap(page, size, lang, lang_id, types){
       try{
             let firstMap = new Map();
@@ -108,7 +124,7 @@ async function CardsDatasToMap(page, size, lang, lang_id, types){
             }
       }catch(error){
             console.log("[getCardsListPerType][wharehouse][index.js] : ", error)
-            return error;
+            throw error;
       }
 }
 
@@ -155,6 +171,7 @@ async function getCardsListPerId(page, size, lang, types){
             return idMap;
       }catch(error){
             console.log("[getCardsListPerType][wharehouse][index.js] : ", error)
+            throw error;
       }
 }
 
@@ -331,5 +348,6 @@ module.exports = {
       getCardsBy,
       getList,
       getCardsList,
-      getCardsByType
+      getCardsByType,
+      getMultiple
 };
